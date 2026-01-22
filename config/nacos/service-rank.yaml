@@ -1,0 +1,81 @@
+# ==================== 排行服务配置 ====================
+# 配置 Data ID: service-rank.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8085
+
+# ==================== Dubbo 提供者配置 ====================
+dubbo:
+  application:
+    name: service-rank
+    qos-enable: false
+  protocol:
+    port: 20885
+    threads: 50
+
+# ==================== 排行业务配置 ====================
+rank:
+  # 排行榜类型配置
+  types:
+    # 战力榜
+    combat-power:
+      enabled: true
+      # 显示数量
+      display-size: 100
+      # 刷新间隔 (秒)
+      refresh-interval: 300
+      # 是否跨服
+      cross-server: true
+    # 等级榜
+    level:
+      enabled: true
+      display-size: 100
+      refresh-interval: 600
+      cross-server: false
+    # 公会榜
+    guild:
+      enabled: true
+      display-size: 50
+      refresh-interval: 600
+      cross-server: true
+    # 竞技场榜
+    arena:
+      enabled: true
+      display-size: 100
+      refresh-interval: 60
+      cross-server: false
+    # 充值榜
+    recharge:
+      enabled: true
+      display-size: 50
+      refresh-interval: 300
+      cross-server: false
+
+  # 缓存配置
+  cache:
+    # 本地缓存过期时间 (秒)
+    local-expire: 60
+    # Redis 缓存过期时间 (秒)
+    redis-expire: 300
+
+  # 快照配置
+  snapshot:
+    # 是否启用快照
+    enabled: true
+    # 快照保留天数
+    retention-days: 30
+    # 快照时间 (cron)
+    cron: "0 0 0 * * ?"
+
+# ==================== 跨服排行配置 ====================
+cross-rank:
+  # 是否启用跨服排行
+  enabled: true
+  # 同步间隔 (秒)
+  sync-interval: 600
+  # 参与的服务器分组
+  server-groups:
+    - group-1
+    - group-2
+    - group-3

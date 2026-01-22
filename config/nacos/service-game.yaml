@@ -1,0 +1,78 @@
+# ==================== 游戏服务配置 ====================
+# 配置 Data ID: service-game.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8081
+
+# ==================== Dubbo 提供者配置 ====================
+dubbo:
+  application:
+    name: service-game
+    qos-enable: false
+  protocol:
+    port: 20881
+    threads: 200
+
+# ==================== Actor 系统配置 ====================
+game:
+  actor:
+    player:
+      # 最大缓存玩家数
+      max-size: 10000
+      # 空闲超时 (分钟)
+      idle-timeout-minutes: 30
+      # 自动保存间隔 (秒)
+      save-interval-seconds: 300
+    guild:
+      max-size: 1000
+      idle-timeout-minutes: 60
+      save-interval-seconds: 600
+
+# ==================== 游戏业务配置 ====================
+  # 玩家配置
+  player:
+    # 最大等级
+    max-level: 100
+    # 体力上限
+    max-energy: 200
+    # 体力恢复间隔 (秒)
+    energy-recover-interval: 300
+    # 每次恢复体力值
+    energy-recover-amount: 1
+
+  # 背包配置
+  bag:
+    # 背包格子上限
+    max-slots: 200
+    # 单格堆叠上限
+    max-stack: 9999
+
+  # 战斗配置
+  battle:
+    # 战斗超时 (秒)
+    timeout-seconds: 300
+    # 自动战斗间隔 (毫秒)
+    auto-battle-interval: 1000
+
+# ==================== 跨服通信配置 ====================
+cross-server:
+  # 本服 ID
+  server-id: ${SERVER_ID:1}
+  # 服务器分组 (同组内可跨服)
+  server-group: ${SERVER_GROUP:group-1}
+  # 跨服服务列表
+  services:
+    # 公会服务 (跨服公会战等)
+    guild:
+      enabled: true
+      # 调用超时
+      timeout: 5000
+    # 排行服务 (跨服排行)
+    rank:
+      enabled: true
+      timeout: 3000
+    # 聊天服务 (跨服聊天)
+    chat:
+      enabled: true
+      timeout: 3000

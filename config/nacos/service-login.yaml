@@ -1,0 +1,53 @@
+# ==================== 登录服务配置 ====================
+# 配置 Data ID: service-login.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8082
+
+# ==================== Dubbo 提供者配置 ====================
+dubbo:
+  application:
+    name: service-login
+    qos-enable: false
+  protocol:
+    port: 20882
+    threads: 100
+
+# ==================== 登录业务配置 ====================
+login:
+  # Token 配置
+  token:
+    # Token 有效期 (秒) - 7天
+    expire-seconds: 604800
+    # Token 密钥
+    secret: ${TOKEN_SECRET:game-server-secret-key-2024}
+  # 账号配置
+  account:
+    # 用户名长度限制
+    username-min-length: 4
+    username-max-length: 20
+    # 密码长度限制
+    password-min-length: 6
+    password-max-length: 32
+  # 角色配置
+  role:
+    # 每个账号最大角色数
+    max-roles-per-account: 3
+    # 角色名长度限制
+    name-min-length: 2
+    name-max-length: 12
+    # 初始等级
+    initial-level: 1
+    # 初始钻石
+    initial-diamond: 100
+    # 初始金币
+    initial-gold: 10000
+  # 防刷配置
+  anti-spam:
+    # 注册间隔 (秒)
+    register-interval: 60
+    # 登录失败锁定次数
+    login-fail-lock-count: 5
+    # 锁定时长 (秒)
+    lock-duration: 300

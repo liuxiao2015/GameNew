@@ -1,0 +1,65 @@
+# ==================== 聊天服务配置 ====================
+# 配置 Data ID: service-chat.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8084
+
+# ==================== Dubbo 提供者配置 ====================
+dubbo:
+  application:
+    name: service-chat
+    qos-enable: false
+  protocol:
+    port: 20884
+    threads: 100
+
+# ==================== 聊天业务配置 ====================
+chat:
+  # 频道配置
+  channel:
+    # 世界聊天冷却 (秒)
+    world-cooldown: 5
+    # 公会聊天冷却 (秒)
+    guild-cooldown: 2
+    # 私聊冷却 (秒)
+    private-cooldown: 1
+    # 跨服聊天冷却 (秒)
+    cross-cooldown: 10
+
+  # 消息配置
+  message:
+    # 最大消息长度
+    max-length: 200
+    # 消息历史保留条数
+    history-limit: 100
+    # 消息过期时间 (秒) - 7天
+    expire-seconds: 604800
+
+  # 禁言配置
+  mute:
+    # 默认禁言时长 (秒) - 1小时
+    default-duration: 3600
+    # 最大禁言时长 (秒) - 30天
+    max-duration: 2592000
+
+  # 敏感词过滤
+  filter:
+    enabled: true
+    # 敏感词替换字符
+    replace-char: "*"
+    # 敏感词库路径 (Nacos 配置或本地文件)
+    dict-path: classpath:sensitive-words.txt
+
+# ==================== 跨服聊天配置 ====================
+cross-chat:
+  # 是否启用跨服聊天
+  enabled: true
+  # 跨服频道列表
+  channels:
+    - name: cross-world
+      description: 跨服世界频道
+      cooldown: 30
+    - name: cross-trade
+      description: 跨服交易频道
+      cooldown: 60

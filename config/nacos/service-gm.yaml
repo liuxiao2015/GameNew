@@ -1,0 +1,61 @@
+# ==================== GM 后台服务配置 ====================
+# 配置 Data ID: service-gm.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8086
+
+# ==================== Dubbo 消费者配置 ====================
+dubbo:
+  application:
+    name: service-gm
+    qos-enable: false
+  consumer:
+    timeout: 10000
+    retries: 0
+    check: false
+
+# ==================== GM 安全配置 ====================
+gm:
+  security:
+    # JWT Token 配置
+    jwt:
+      secret: ${GM_JWT_SECRET:gm-super-secret-key-2024}
+      # Token 过期时间 (秒) - 8小时
+      expire-seconds: 28800
+    # IP 白名单 (生产环境必须配置)
+    ip-whitelist:
+      - 127.0.0.1
+      - 192.168.0.0/16
+      - 10.0.0.0/8
+    # 操作日志保留天数
+    log-retention-days: 180
+
+  # 权限配置
+  permission:
+    # 超级管理员账号 (拥有所有权限)
+    super-admins:
+      - admin
+    # 角色权限映射
+    roles:
+      admin:
+        - "*"  # 所有权限
+      operator:
+        - "player:view"
+        - "player:edit"
+        - "mail:send"
+        - "notice:send"
+        - "config:view"
+      viewer:
+        - "player:view"
+        - "guild:view"
+        - "log:view"
+
+  # 操作限制
+  limit:
+    # 批量操作上限
+    batch-size: 100
+    # 邮件群发上限
+    mail-broadcast-limit: 10000
+    # 单次查询上限
+    query-limit: 1000

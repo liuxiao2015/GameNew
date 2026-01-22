@@ -1,0 +1,88 @@
+# ==================== 网关服务配置 ====================
+# 配置 Data ID: service-gateway.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8080
+
+# ==================== 网关核心配置 ====================
+gateway:
+  # TCP 配置
+  tcp:
+    enabled: true
+    port: 9000
+    boss-threads: 1
+    worker-threads: 0
+    backlog: 1024
+    heartbeat:
+      interval-seconds: 30
+      timeout-seconds: 90
+  # WebSocket 配置
+  websocket:
+    enabled: true
+    port: 9001
+    path: /ws
+  # 限流配置
+  rate-limit:
+    enabled: true
+    global-qps: 10000
+    ip-qps: 100
+    user-qps: 50
+  # 黑白名单
+  security:
+    # IP 白名单 (为空表示不限制)
+    ip-whitelist: []
+    # IP 黑名单
+    ip-blacklist: []
+    # 封禁时长 (秒)
+    ban-duration: 3600
+
+# ==================== 服务路由配置 ====================
+# 协议号 -> 服务名映射
+service-router:
+  routes:
+    # 登录协议 1000-1999 -> service-login
+    - protocol-range: [1000, 1999]
+      service: service-login
+      # 是否需要登录
+      require-auth: false
+    # 玩家协议 2000-2999 -> service-game
+    - protocol-range: [2000, 2999]
+      service: service-game
+      require-auth: true
+    # 背包协议 3000-3999 -> service-game
+    - protocol-range: [3000, 3999]
+      service: service-game
+      require-auth: true
+    # 战斗协议 4000-4999 -> service-game
+    - protocol-range: [4000, 4999]
+      service: service-game
+      require-auth: true
+    # 社交协议 5000-5999 -> service-game
+    - protocol-range: [5000, 5999]
+      service: service-game
+      require-auth: true
+    # 公会协议 6000-6999 -> service-guild
+    - protocol-range: [6000, 6999]
+      service: service-guild
+      require-auth: true
+    # 聊天协议 7000-7999 -> service-chat
+    - protocol-range: [7000, 7999]
+      service: service-chat
+      require-auth: true
+    # 排行协议 8000-8999 -> service-rank
+    - protocol-range: [8000, 8999]
+      service: service-rank
+      require-auth: true
+
+# ==================== Dubbo 消费者配置 ====================
+dubbo:
+  application:
+    name: gateway-server
+    qos-enable: false
+  consumer:
+    timeout: 3000
+    retries: 0
+    check: false
+    # 直连配置 (调试用，生产环境删除)
+    # url: dubbo://localhost:20881

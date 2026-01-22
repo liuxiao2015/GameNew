@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+    
+    <!-- 服务配置 -->
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="gateway" />
+    <springProperty scope="context" name="SERVER_ID" source="spring.cloud.nacos.discovery.metadata.server-id" defaultValue="0" />
+    
+    <!-- 日志根目录 -->
+    <property name="LOG_PATH" value="logs" />
+    
+    <!-- 引入基础配置 -->
+    <include resource="logback-base.xml" />
+    
+    <!-- 网关特定日志配置 -->
+    <logger name="com.game.gateway" level="DEBUG" />
+    
+    <!-- 根日志配置 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" />
+        <appender-ref ref="ASYNC_SLS" />
+        <appender-ref ref="ERROR" />
+    </root>
+    
+</configuration>

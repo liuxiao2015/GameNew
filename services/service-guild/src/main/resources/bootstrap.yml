@@ -1,0 +1,32 @@
+# ==================== 公会服务 Bootstrap 配置 ====================
+
+spring:
+  application:
+    name: service-guild
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  cloud:
+    nacos:
+      server-addr: ${NACOS_ADDR:localhost:8848}
+      namespace: ${NACOS_NAMESPACE:game-server}
+      username: ${NACOS_USER:nacos}
+      password: ${NACOS_PASS:nacos}
+      config:
+        file-extension: yaml
+        group: GAME_SERVER
+        refresh-enabled: true
+        shared-configs:
+          - data-id: shared-config.yaml
+            group: GAME_SERVER
+            refresh: true
+        extension-configs:
+          - data-id: service-guild.yaml
+            group: GAME_SERVER
+            refresh: true
+      discovery:
+        enabled: true
+        group: GAME_SERVER
+        register-enabled: true
+        metadata:
+          server-id: ${SERVER_ID:1}
+          server-group: ${SERVER_GROUP:group-1}

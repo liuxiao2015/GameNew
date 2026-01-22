@@ -1,0 +1,42 @@
+# ==================== 网关服务 Bootstrap 配置 ====================
+# 用于连接 Nacos 配置中心，在 application.yml 之前加载
+
+spring:
+  application:
+    name: gateway-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  cloud:
+    nacos:
+      # Nacos 服务地址
+      server-addr: ${NACOS_ADDR:localhost:8848}
+      # 命名空间 (用于环境隔离: dev/test/prod)
+      namespace: ${NACOS_NAMESPACE:game-server}
+      # 用户名密码
+      username: ${NACOS_USER:nacos}
+      password: ${NACOS_PASS:nacos}
+      # 配置中心
+      config:
+        # 配置文件格式
+        file-extension: yaml
+        # 配置分组
+        group: GAME_SERVER
+        # 是否开启配置预加载
+        refresh-enabled: true
+        # 共享配置
+        shared-configs:
+          - data-id: shared-config.yaml
+            group: GAME_SERVER
+            refresh: true
+        # 扩展配置 (优先级高于共享配置)
+        extension-configs:
+          - data-id: service-gateway.yaml
+            group: GAME_SERVER
+            refresh: true
+      # 服务发现 (Dubbo 服务注册)
+      discovery:
+        enabled: true
+        group: GAME_SERVER
+        register-enabled: true
+        watch:
+          enabled: true

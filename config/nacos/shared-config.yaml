@@ -1,0 +1,58 @@
+# ==================== Nacos 共享配置 ====================
+# 配置 Data ID: shared-config.yaml
+# 配置 Group: GAME_SERVER
+# 
+# 所有服务共享的配置项，减少重复配置
+
+# ==================== MongoDB 共享配置 ====================
+spring:
+  data:
+    mongodb:
+      uri: mongodb://game_user:game_user_123@${MONGO_HOST:localhost:27017}/game_server?authSource=game_server
+      auto-index-creation: true
+
+# ==================== Redis 共享配置 ====================
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASS:game123}
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 50
+          max-idle: 20
+          min-idle: 5
+          max-wait: 3000ms
+
+# ==================== Dubbo 共享配置 ====================
+dubbo:
+  registry:
+    address: nacos://${NACOS_ADDR:localhost:8848}
+    parameters:
+      namespace: ${NACOS_NAMESPACE:game-server}
+      group: GAME_SERVER
+  protocol:
+    name: dubbo
+    serialization: hessian2
+  provider:
+    timeout: 5000
+    retries: 0
+    loadbalance: consistenthash
+    # 优雅停机等待时间
+    shutdown.wait: 15000
+  consumer:
+    timeout: 5000
+    retries: 0
+    check: false
+    # 服务调用超时自动重连
+    lazy: true
+
+# ==================== 日志共享配置 ====================
+logging:
+  level:
+    root: INFO
+    com.game: DEBUG
+    org.apache.dubbo: WARN
+    org.springframework.data.mongodb: WARN
+    io.lettuce.core: WARN

@@ -1,0 +1,72 @@
+# ==================== 定时任务服务配置 ====================
+# 配置 Data ID: service-task.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8087
+
+# ==================== XXL-Job 配置 ====================
+xxl:
+  job:
+    admin:
+      addresses: http://${XXL_JOB_ADDR:localhost:8088}/xxl-job-admin
+    accessToken: ${XXL_JOB_TOKEN:default_token}
+    executor:
+      appname: game-task-executor
+      address:
+      ip:
+      port: 9999
+      logpath: ./logs/xxl-job
+      logretentiondays: 30
+
+# ==================== 定时任务配置 ====================
+task:
+  # 每日重置任务
+  daily-reset:
+    enabled: true
+    # 重置时间 (cron) - 每天凌晨 5 点
+    cron: "0 0 5 * * ?"
+    # 重置内容
+    items:
+      - daily-quest      # 每日任务
+      - daily-arena      # 每日竞技场次数
+      - daily-dungeon    # 每日副本次数
+      - daily-sign       # 每日签到
+      - daily-shop       # 每日商店刷新
+
+  # 每周重置任务
+  weekly-reset:
+    enabled: true
+    # 重置时间 (cron) - 每周一凌晨 5 点
+    cron: "0 0 5 ? * MON"
+    items:
+      - weekly-quest     # 每周任务
+      - weekly-arena     # 每周竞技场奖励
+      - weekly-guild     # 每周公会贡献
+
+  # 排行榜更新任务
+  rank-update:
+    enabled: true
+    # 更新间隔 (cron) - 每 5 分钟
+    cron: "0 */5 * * * ?"
+
+  # 数据清理任务
+  cleanup:
+    enabled: true
+    # 清理时间 (cron) - 每天凌晨 4 点
+    cron: "0 0 4 * * ?"
+    # 清理配置
+    items:
+      - name: expired-mail
+        # 过期天数
+        expire-days: 30
+      - name: operation-log
+        expire-days: 90
+      - name: chat-message
+        expire-days: 7
+
+  # 活动任务
+  activity:
+    enabled: true
+    # 检查间隔 (cron) - 每分钟
+    cron: "0 * * * * ?"

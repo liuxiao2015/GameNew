@@ -1,0 +1,105 @@
+# Game Server 本地开发环境
+# 使用方法: docker-compose up -d
+
+version: '3.8'
+
+services:
+  # ==================== MongoDB ====================
+  mongodb:
+    image: mongo:7.0
+    container_name: game-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: game
+      MONGO_INITDB_ROOT_PASSWORD: game123
+      MONGO_INITDB_DATABASE: game_server
+    volumes:
+      - mongodb_data:/data/db
+      - ./init/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - game-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Redis ====================
+  redis:
+    image: redis:7.2-alpine
+    container_name: game-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass game123
+    volumes:
+      - redis_data:/data
+    networks:
+      - game-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "game123", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Nacos ====================
+  nacos:
+    image: nacos/nacos-server:v2.3.0
+    container_name: game-nacos
+    restart: unless-stopped
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    environment:
+      MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: embedded
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+    volumes:
+      - nacos_data:/home/nacos/data
+    networks:
+      - game-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ==================== XXL-Job Admin ====================
+  xxl-job-admin:
+    image: xuxueli/xxl-job-admin:2.4.0
+    container_name: game-xxl-job
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+    environment:
+      PARAMS: >-
+        --spring.datasource.url=jdbc:h2:file:/data/xxl-job;MODE=MYSQL;DB_CLOSE_DELAY=-1
+        --spring.datasource.username=sa
+        --spring.datasource.password=
+        --spring.datasource.driver-class-name=org.h2.Driver
+        --xxl.job.accessToken=game-xxl-job-token
+    volumes:
+      - xxljob_data:/data
+    networks:
+      - game-network
+
+# ==================== 网络 ====================
+networks:
+  game-network:
+    driver: bridge
+
+# ==================== 数据卷 ====================
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  nacos_data:
+    driver: local
+  xxljob_data:
+    driver: local

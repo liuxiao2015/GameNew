@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="gm" />
+    <springProperty scope="context" name="SERVER_ID" source="spring.cloud.nacos.discovery.metadata.server-id" defaultValue="0" />
+    <property name="LOG_PATH" value="logs" />
+    <include resource="logback-base.xml" />
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ASYNC_FILE" />
+        <appender-ref ref="ASYNC_SLS" />
+        <appender-ref ref="ERROR" />
+    </root>
+</configuration>

@@ -1,0 +1,190 @@
+syntax = "proto3";
+
+package game.proto;
+
+option java_package = "com.game.proto";
+option java_outer_classname = "GuildProto";
+option java_multiple_files = false;
+
+import "common.proto";
+
+// ==================== 公会协议 (6000-6999) ====================
+
+// 创建公会请求 (协议号: 6001)
+message CreateGuildRequest {
+    string guild_name = 1;       // 公会名
+    string declaration = 2;      // 公会宣言
+    int32 icon_id = 3;           // 公会图标
+}
+
+// 创建公会响应
+message CreateGuildResponse {
+    Result result = 1;
+    GuildInfo guild = 2;
+}
+
+// 公会信息
+message GuildInfo {
+    int64 guild_id = 1;          // 公会 ID
+    string guild_name = 2;       // 公会名
+    int32 level = 3;             // 公会等级
+    int64 exp = 4;               // 公会经验
+    int32 icon_id = 5;           // 公会图标
+    string declaration = 6;      // 公会宣言
+    int64 leader_id = 7;         // 会长 ID
+    string leader_name = 8;      // 会长名
+    int32 member_count = 9;      // 成员数量
+    int32 max_member = 10;       // 最大成员数
+    int64 create_time = 11;      // 创建时间
+    int32 join_type = 12;        // 加入方式 (0:自由 1:审批 2:禁止)
+    int32 join_level = 13;       // 加入等级限制
+}
+
+// 获取公会信息请求 (协议号: 6002)
+message GetGuildInfoRequest {
+    int64 guild_id = 1;          // 公会 ID (0 表示自己公会)
+}
+
+// 获取公会信息响应
+message GetGuildInfoResponse {
+    Result result = 1;
+    GuildInfo guild = 2;
+    repeated GuildMember members = 3; // 成员列表
+}
+
+// 公会成员
+message GuildMember {
+    int64 role_id = 1;           // 角色 ID
+    string role_name = 2;        // 角色名
+    int32 level = 3;             // 等级
+    int32 avatar_id = 4;         // 头像
+    int32 position = 5;          // 职位 (0:成员 1:精英 2:副会长 3:会长)
+    int64 contribution = 6;      // 贡献值
+    int64 join_time = 7;         // 加入时间
+    int64 last_login = 8;        // 最后登录时间
+    bool is_online = 9;          // 是否在线
+}
+
+// 搜索公会请求 (协议号: 6003)
+message SearchGuildRequest {
+    string keyword = 1;          // 搜索关键字
+    PageRequest page = 2;        // 分页
+}
+
+// 搜索公会响应
+message SearchGuildResponse {
+    Result result = 1;
+    repeated GuildInfo guilds = 2;
+    PageInfo page = 3;
+}
+
+// 申请加入公会请求 (协议号: 6004)
+message ApplyJoinGuildRequest {
+    int64 guild_id = 1;          // 公会 ID
+    string message = 2;          // 申请留言
+}
+
+// 申请加入公会响应
+message ApplyJoinGuildResponse {
+    Result result = 1;
+}
+
+// 处理加入申请请求 (协议号: 6005)
+message HandleApplyRequest {
+    int64 apply_id = 1;          // 申请 ID
+    int64 role_id = 2;           // 申请人 ID
+    bool accept = 3;             // 是否同意
+}
+
+// 处理加入申请响应
+message HandleApplyResponse {
+    Result result = 1;
+}
+
+// 退出公会请求 (协议号: 6006)
+message LeaveGuildRequest {
+}
+
+// 退出公会响应
+message LeaveGuildResponse {
+    Result result = 1;
+}
+
+// 踢出成员请求 (协议号: 6007)
+message KickMemberRequest {
+    int64 role_id = 1;           // 被踢成员 ID
+}
+
+// 踢出成员响应
+message KickMemberResponse {
+    Result result = 1;
+}
+
+// 公会捐献请求 (协议号: 6008)
+message GuildDonateRequest {
+    int32 donate_type = 1;       // 捐献类型 (1:金币 2:钻石)
+    int64 amount = 2;            // 捐献数量
+}
+
+// 公会捐献响应
+message GuildDonateResponse {
+    Result result = 1;
+    int64 contribution = 2;      // 获得贡献
+    int64 guild_exp = 3;         // 公会获得经验
+}
+
+// 修改成员职位请求 (协议号: 6009)
+message ChangeMemberPositionRequest {
+    int64 role_id = 1;           // 成员 ID
+    int32 new_position = 2;      // 新职位
+}
+
+// 修改成员职位响应
+message ChangeMemberPositionResponse {
+    Result result = 1;
+}
+
+// 转让会长请求 (协议号: 6010)
+message TransferLeaderRequest {
+    int64 new_leader_id = 1;     // 新会长 ID
+}
+
+// 转让会长响应
+message TransferLeaderResponse {
+    Result result = 1;
+}
+
+// 修改公会设置请求 (协议号: 6011)
+message ChangeGuildSettingRequest {
+    string declaration = 1;      // 公会宣言 (空表示不修改)
+    int32 join_type = 2;         // 加入方式 (-1 表示不修改)
+    int32 join_level = 3;        // 加入等级 (-1 表示不修改)
+}
+
+// 修改公会设置响应
+message ChangeGuildSettingResponse {
+    Result result = 1;
+}
+
+// ==================== 推送消息 ====================
+
+// 公会成员变化推送
+message GuildMemberChangePush {
+    int32 change_type = 1;       // 变化类型 (1:加入 2:退出 3:踢出)
+    GuildMember member = 2;      // 变化的成员
+}
+
+// 公会信息变化推送
+message GuildInfoChangePush {
+    GuildInfo guild = 1;
+}
+
+// 公会申请推送
+message GuildApplyPush {
+    int64 apply_id = 1;
+    int64 role_id = 2;
+    string role_name = 3;
+    int32 level = 4;
+    string message = 5;
+    int64 apply_time = 6;
+}

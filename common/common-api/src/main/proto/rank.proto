@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package game.proto;
+
+option java_package = "com.game.proto";
+option java_outer_classname = "RankProto";
+option java_multiple_files = false;
+
+import "common.proto";
+
+// ==================== 排行协议 (8000-8999) ====================
+
+// 获取排行榜请求 (协议号: 8001)
+message GetRankListRequest {
+    int32 rank_type = 1;         // 排行类型
+    int32 start = 2;             // 起始名次 (从 1 开始)
+    int32 count = 3;             // 获取数量
+}
+
+// 获取排行榜响应
+message GetRankListResponse {
+    Result result = 1;
+    int32 rank_type = 2;
+    repeated RankEntry entries = 3;
+    int64 refresh_time = 4;      // 刷新时间
+}
+
+// 排行榜条目
+message RankEntry {
+    int32 rank = 1;              // 名次
+    int64 role_id = 2;           // 角色 ID
+    string role_name = 3;        // 角色名
+    int32 level = 4;             // 等级
+    int32 avatar_id = 5;         // 头像
+    int64 guild_id = 6;          // 公会 ID
+    string guild_name = 7;       // 公会名
+    int64 score = 8;             // 分数
+    map<string, string> extra = 9; // 扩展信息
+}
+
+// 获取自己排名请求 (协议号: 8002)
+message GetMyRankRequest {
+    int32 rank_type = 1;         // 排行类型
+}
+
+// 获取自己排名响应
+message GetMyRankResponse {
+    Result result = 1;
+    int32 rank = 2;              // 自己的名次 (0 表示未上榜)
+    int64 score = 3;             // 自己的分数
+}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    统一日志基础配置
+    所有服务的 logback-spring.xml 应 include 此文件
+    
+    使用方式：
+    在服务的 logback-spring.xml 中添加：
+    <include resource="logback-sls.xml" />
+    
+    需要设置的变量：
+    - SERVICE_NAME: 服务名称 (如 gateway, game, guild 等)
+    - SERVER_ID: 服务器 ID
+    - LOG_PATH: 日志根目录 (默认 logs)
+-->
+<included>
+    <!-- 引入 SLS 配置 -->
+    <include resource="logback-sls.xml" />
+    
+    <!-- ==================== 框架日志级别 ==================== -->
+    
+    <!-- Spring 框架 -->
+    <logger name="org.springframework" level="WARN" />
+    <logger name="org.springframework.web" level="INFO" />
+    <logger name="org.springframework.data.mongodb" level="WARN" />
+    
+    <!-- Dubbo -->
+    <logger name="org.apache.dubbo" level="WARN" />
+    
+    <!-- Netty -->
+    <logger name="io.netty" level="WARN" />
+    
+    <!-- MongoDB -->
+    <logger name="org.mongodb.driver" level="WARN" />
+    
+    <!-- Redis -->
+    <logger name="io.lettuce" level="WARN" />
+    
+    <!-- Nacos -->
+    <logger name="com.alibaba.nacos" level="WARN" />
+    
+    <!-- 游戏服务日志 -->
+    <logger name="com.game" level="DEBUG" />
+</included>

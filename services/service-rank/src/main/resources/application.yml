@@ -1,0 +1,59 @@
+# ==================== 排行服务配置 ====================
+
+spring:
+  application:
+    name: service-rank
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+# ==================== 服务端口 ====================
+server:
+  port: ${SERVER_PORT:8085}
+
+# ==================== Dubbo 配置 ====================
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-enable: false
+  registry:
+    address: nacos://${NACOS_ADDR:localhost:8848}
+    parameters:
+      namespace: ${NACOS_NAMESPACE:public}
+  protocol:
+    name: dubbo
+    port: ${DUBBO_PORT:20885}
+    threads: 100
+  provider:
+    timeout: 5000
+    retries: 0
+  consumer:
+    timeout: 5000
+    retries: 0
+    check: false
+
+# ==================== Redis 配置 ====================
+spring.data.redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASS:game123}
+  database: ${REDIS_DB:0}
+  lettuce:
+    pool:
+      max-active: 50
+      max-idle: 20
+      min-idle: 5
+      max-wait: 3000ms
+
+# ==================== 排行配置 ====================
+game:
+  rank:
+    # 排行榜刷新间隔 (分钟)
+    refresh-interval-minutes: 5
+    # 排行榜最大条目数
+    max-entries: 1000
+
+# ==================== 日志配置 ====================
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    com.game: ${LOG_LEVEL:DEBUG}

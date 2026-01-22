@@ -1,0 +1,80 @@
+# ==================== 公会服务配置 ====================
+# 配置 Data ID: service-guild.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8083
+
+# ==================== Dubbo 提供者配置 ====================
+dubbo:
+  application:
+    name: service-guild
+    qos-enable: false
+  protocol:
+    port: 20883
+    threads: 100
+
+# ==================== 公会 Actor 配置 ====================
+game:
+  actor:
+    guild:
+      # 最大缓存公会数
+      max-size: 500
+      # 空闲超时 (分钟)
+      idle-timeout-minutes: 60
+      # 自动保存间隔 (秒)
+      save-interval-seconds: 600
+
+# ==================== 公会业务配置 ====================
+guild:
+  # 公会等级配置
+  level:
+    # 最大公会等级
+    max-level: 20
+    # 每级经验需求倍率
+    exp-multiplier: 1.5
+
+  # 成员配置
+  member:
+    # 初始成员上限
+    initial-max-members: 30
+    # 每级增加成员数
+    members-per-level: 5
+    # 最大成员上限
+    max-members: 100
+    # 入会冷却 (秒)
+    join-cooldown: 86400
+
+  # 申请配置
+  application:
+    # 最大待处理申请数
+    max-pending: 50
+    # 申请过期时间 (秒)
+    expire-seconds: 259200
+
+  # 贡献配置
+  contribution:
+    # 每日贡献上限
+    daily-limit: 10000
+    # 贡献兑换比例 (金币)
+    exchange-rate-gold: 100
+    # 贡献兑换比例 (钻石)
+    exchange-rate-diamond: 1
+
+  # 公会名配置
+  name:
+    min-length: 2
+    max-length: 12
+    # 修改名称消耗 (钻石)
+    rename-cost: 500
+
+# ==================== 跨服公会配置 ====================
+cross-guild:
+  # 是否启用跨服公会战
+  war-enabled: true
+  # 公会战匹配范围 (等级差)
+  war-match-level-range: 3
+  # 公会战报名时间 (cron)
+  war-signup-cron: "0 0 12 * * MON"
+  # 公会战开始时间 (cron)
+  war-start-cron: "0 0 20 * * SAT"
