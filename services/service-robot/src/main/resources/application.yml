@@ -1,0 +1,31 @@
+# ==================== 机器人服务配置 ====================
+
+spring:
+  application:
+    name: service-robot
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+# ==================== 服务端口 ====================
+server:
+  port: ${SERVER_PORT:8095}
+
+# ==================== 机器人配置 ====================
+robot:
+  server:
+    # 网关地址
+    host: ${GATEWAY_HOST:127.0.0.1}
+    port: ${GATEWAY_PORT:8888}
+  # 机器人数量
+  count: ${ROBOT_COUNT:10}
+  # 登录间隔 (毫秒)
+  login-interval: ${ROBOT_LOGIN_INTERVAL:100}
+  # 心跳间隔 (毫秒)
+  heartbeat-interval: ${ROBOT_HEARTBEAT_INTERVAL:30000}
+
+# ==================== 日志配置 ====================
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    com.game.robot: ${LOG_LEVEL:DEBUG}
+    io.netty: WARN

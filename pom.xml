@@ -37,13 +37,9 @@
         <module>services/service-chat</module>
         <module>services/service-rank</module>
         <module>services/service-scheduler</module>
-
-        <!-- 支撑模块 (Support) - 不随微服务启动 -->
-        <module>support/support-gm</module>
-        <module>support/support-robot</module>
-
-        <!-- 工具 (Tools) -->
-        <module>tools/proto-generator</module>
+        <module>services/service-gm</module>
+        <module>services/service-robot</module>
+        <module>services/service-launcher</module>
     </modules>
 
     <!-- 属性配置 -->
@@ -178,12 +174,12 @@
             </dependency>
             <dependency>
                 <groupId>com.game</groupId>
-                <artifactId>support-gm</artifactId>
+                <artifactId>service-gm</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.game</groupId>
-                <artifactId>support-robot</artifactId>
+                <artifactId>service-robot</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

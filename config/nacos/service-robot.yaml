@@ -1,0 +1,56 @@
+# ==================== 机器人服务配置 ====================
+# 配置 Data ID: service-robot.yaml
+# 配置 Group: GAME_SERVER
+
+server:
+  port: 8095
+
+# ==================== 机器人配置 ====================
+robot:
+  # 网关连接配置
+  gateway:
+    host: ${GATEWAY_HOST:127.0.0.1}
+    port: ${GATEWAY_PORT:8888}
+    # 连接超时 (毫秒)
+    connect-timeout: 5000
+    # 读超时 (毫秒)
+    read-timeout: 30000
+
+  # 机器人实例配置
+  instance:
+    # 默认机器人数量
+    count: 100
+    # 机器人 ID 起始值
+    id-start: 1000000
+    # 登录间隔 (毫秒)
+    login-interval: 100
+    # 心跳间隔 (毫秒)
+    heartbeat-interval: 30000
+
+  # 行为配置
+  behavior:
+    # 是否启用随机行为
+    random-action-enabled: true
+    # 随机行为间隔 (毫秒)
+    random-action-interval: 5000
+    # 是否启用聊天
+    chat-enabled: false
+    # 聊天间隔 (毫秒)
+    chat-interval: 60000
+
+  # 压测配置
+  stress:
+    # 是否启用压测模式
+    enabled: false
+    # 并发连接数
+    concurrent-connections: 1000
+    # 每秒请求数
+    requests-per-second: 100
+    # 持续时间 (秒)
+    duration-seconds: 300
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    com.game.robot: INFO
+    io.netty: WARN

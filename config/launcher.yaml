@@ -1,0 +1,163 @@
+# ==================== 服务启动器配置 ====================
+# 用于一键启动/停止所有微服务
+
+# 全局配置
+global:
+  # 项目根目录
+  projectRoot: "."
+  # JVM 默认参数
+  jvmArgs: "-Xms512m -Xmx1g --enable-preview"
+  # 启动超时时间 (秒)
+  startupTimeout: 120
+  # 停止超时时间 (秒)
+  shutdownTimeout: 30
+  # 日志目录
+  logDir: "logs"
+  # PID 文件目录
+  pidDir: ".pids"
+  # 全局环境变量
+  env:
+    NACOS_ADDR: "localhost:8848"
+    NACOS_NAMESPACE: "game-server"
+    MONGO_HOST: "localhost:27017"
+    REDIS_HOST: "localhost"
+    REDIS_PORT: "6379"
+
+# 服务组定义
+groups:
+  infra:
+    name: "基础设施"
+    description: "网关和核心服务"
+    order: 10
+    services:
+      - gateway-server
+      - service-login
+  
+  core:
+    name: "核心服务"
+    description: "游戏核心业务服务"
+    order: 20
+    services:
+      - service-game
+      - service-guild
+      - service-chat
+  
+  support:
+    name: "支撑服务"
+    description: "辅助和管理服务"
+    order: 30
+    services:
+      - service-rank
+      - service-scheduler
+      - service-gm
+
+# 服务配置
+services:
+  # ==================== 网关 ====================
+  - name: gateway-server
+    description: "网关服务"
+    module: "gateway/gateway-server"
+    jar: "target/gateway-server-1.0.0-SNAPSHOT.jar"
+    port: 8888
+    dubboPort: 20880
+    order: 10
+    jvmArgs: "-Xms256m -Xmx512m --enable-preview"
+    healthCheckUrl: "http://localhost:${port}/health/live"
+    profiles: "dev"
+    env:
+      SERVER_ID: "1"
+
+  # ==================== 登录服务 ====================
+  - name: service-login
+    description: "登录服务"
+    module: "services/service-login"
+    jar: "target/service-login-1.0.0-SNAPSHOT.jar"
+    port: 8080
+    dubboPort: 20881
+    order: 20
+    dependsOn:
+      - gateway-server
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== 游戏服务 ====================
+  - name: service-game
+    description: "游戏服务"
+    module: "services/service-game"
+    jar: "target/service-game-1.0.0-SNAPSHOT.jar"
+    port: 8081
+    dubboPort: 20882
+    order: 30
+    jvmArgs: "-Xms1g -Xmx2g --enable-preview"
+    dependsOn:
+      - service-login
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== 公会服务 ====================
+  - name: service-guild
+    description: "公会服务"
+    module: "services/service-guild"
+    jar: "target/service-guild-1.0.0-SNAPSHOT.jar"
+    port: 8082
+    dubboPort: 20883
+    order: 30
+    dependsOn:
+      - service-login
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== 聊天服务 ====================
+  - name: service-chat
+    description: "聊天服务"
+    module: "services/service-chat"
+    jar: "target/service-chat-1.0.0-SNAPSHOT.jar"
+    port: 8083
+    dubboPort: 20884
+    order: 30
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== 排行榜服务 ====================
+  - name: service-rank
+    description: "排行榜服务"
+    module: "services/service-rank"
+    jar: "target/service-rank-1.0.0-SNAPSHOT.jar"
+    port: 8084
+    dubboPort: 20885
+    order: 40
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== 定时任务服务 ====================
+  - name: service-scheduler
+    description: "定时任务服务"
+    module: "services/service-scheduler"
+    jar: "target/service-scheduler-1.0.0-SNAPSHOT.jar"
+    port: 8085
+    dubboPort: 20886
+    order: 40
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== GM 后台 ====================
+  - name: service-gm
+    description: "GM 后台服务"
+    module: "services/service-gm"
+    jar: "target/service-gm-1.0.0-SNAPSHOT.jar"
+    port: 8090
+    dubboPort: 0
+    order: 50
+    jvmArgs: "-Xms256m -Xmx512m --enable-preview"
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+    profiles: "dev"
+
+  # ==================== 机器人服务 (默认禁用) ====================
+  - name: service-robot
+    description: "压测机器人服务"
+    module: "services/service-robot"
+    jar: "target/service-robot-1.0.0-SNAPSHOT.jar"
+    port: 8095
+    order: 100
+    enabled: false
+    profiles: "dev"
