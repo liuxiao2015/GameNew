@@ -56,6 +56,12 @@ public enum ErrorCode {
     ROLE_DELETED(2014, "角色已删除"),
     UNAUTHORIZED(2015, "未授权"),
     FORBIDDEN(2016, "禁止访问"),
+    ACCOUNT_EXISTS(2017, "账号已存在"),
+    THIRD_PARTY_AUTH_FAILED(2018, "第三方登录验证失败"),
+    THIRD_PARTY_ALREADY_BOUND(2019, "第三方账号已被绑定"),
+    SERVER_NOT_FOUND(2020, "服务器不存在"),
+    SERVER_FULL(2021, "服务器已满"),
+    VERSION_TOO_LOW(2022, "版本过低"),
 
     // ==================== 玩家相关错误 3xxx ====================
     PLAYER_OFFLINE(3001, "玩家不在线"),

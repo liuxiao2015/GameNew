@@ -1,0 +1,14 @@
+[
+  {"id": 1, "key": "initial_gold", "value": "1000", "desc": "玩家初始金币"},
+  {"id": 2, "key": "initial_diamond", "value": "100", "desc": "玩家初始钻石"},
+  {"id": 3, "key": "initial_energy", "value": "100", "desc": "玩家初始体力"},
+  {"id": 4, "key": "energy_recover_interval", "value": "360", "desc": "体力恢复间隔(秒)"},
+  {"id": 5, "key": "energy_recover_amount", "value": "1", "desc": "每次恢复体力点数"},
+  {"id": 6, "key": "role_name_min_length", "value": "2", "desc": "角色名最小长度"},
+  {"id": 7, "key": "role_name_max_length", "value": "12", "desc": "角色名最大长度"},
+  {"id": 8, "key": "max_role_count", "value": "3", "desc": "每个账号最大角色数量"},
+  {"id": 9, "key": "vip_max_level", "value": "15", "desc": "VIP最大等级"},
+  {"id": 10, "key": "guild_create_level", "value": "10", "desc": "创建公会所需等级"},
+  {"id": 11, "key": "guild_create_cost", "value": "10000", "desc": "创建公会所需金币"},
+  {"id": 12, "key": "max_bag_size", "value": "200", "desc": "背包最大容量"}
+]

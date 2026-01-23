@@ -1,0 +1,12 @@
+[
+  {"id": 1, "exp": 100, "totalExp": 0, "maxEnergy": 100, "attack": 10, "defense": 5, "hp": 100, "unlockFunctions": ""},
+  {"id": 2, "exp": 200, "totalExp": 100, "maxEnergy": 102, "attack": 12, "defense": 6, "hp": 120, "unlockFunctions": ""},
+  {"id": 3, "exp": 350, "totalExp": 300, "maxEnergy": 104, "attack": 14, "defense": 7, "hp": 145, "unlockFunctions": ""},
+  {"id": 4, "exp": 550, "totalExp": 650, "maxEnergy": 106, "attack": 17, "defense": 8, "hp": 175, "unlockFunctions": ""},
+  {"id": 5, "exp": 800, "totalExp": 1200, "maxEnergy": 108, "attack": 20, "defense": 10, "hp": 210, "unlockFunctions": "副本"},
+  {"id": 6, "exp": 1100, "totalExp": 2000, "maxEnergy": 110, "attack": 24, "defense": 12, "hp": 250, "unlockFunctions": ""},
+  {"id": 7, "exp": 1450, "totalExp": 3100, "maxEnergy": 112, "attack": 28, "defense": 14, "hp": 295, "unlockFunctions": ""},
+  {"id": 8, "exp": 1850, "totalExp": 4550, "maxEnergy": 114, "attack": 33, "defense": 16, "hp": 345, "unlockFunctions": ""},
+  {"id": 9, "exp": 2300, "totalExp": 6400, "maxEnergy": 116, "attack": 38, "defense": 19, "hp": 400, "unlockFunctions": ""},
+  {"id": 10, "exp": 2800, "totalExp": 8700, "maxEnergy": 118, "attack": 44, "defense": 22, "hp": 460, "unlockFunctions": "公会,竞技场"}
+]

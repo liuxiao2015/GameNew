@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1001,
+    "name": "初级体力药水",
+    "type": 1,
+    "quality": 1,
+    "stackLimit": 99,
+    "sellPrice": 10,
+    "icon": "item_1001",
+    "desc": "恢复10点体力",
+    "levelLimit": 1,
+    "effectParams": "{\"energy\":10}"
+  },
+  {
+    "id": 1002,
+    "name": "中级体力药水",
+    "type": 1,
+    "quality": 2,
+    "stackLimit": 99,
+    "sellPrice": 50,
+    "icon": "item_1002",
+    "desc": "恢复30点体力",
+    "levelLimit": 20,
+    "effectParams": "{\"energy\":30}"
+  },
+  {
+    "id": 2001,
+    "name": "新手之剑",
+    "type": 2,
+    "quality": 1,
+    "stackLimit": 1,
+    "sellPrice": 100,
+    "icon": "equip_2001",
+    "desc": "新手使用的剑",
+    "levelLimit": 1,
+    "effectParams": "{\"attack\":10}"
+  },
+  {
+    "id": 2002,
+    "name": "精钢长剑",
+    "type": 2,
+    "quality": 2,
+    "stackLimit": 1,
+    "sellPrice": 500,
+    "icon": "equip_2002",
+    "desc": "精钢打造的长剑",
+    "levelLimit": 10,
+    "effectParams": "{\"attack\":50}"
+  },
+  {
+    "id": 3001,
+    "name": "铁矿石",
+    "type": 3,
+    "quality": 1,
+    "stackLimit": 999,
+    "sellPrice": 5,
+    "icon": "mat_3001",
+    "desc": "用于锻造装备的材料",
+    "levelLimit": 1,
+    "effectParams": ""
+  }
+]

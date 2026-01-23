@@ -1,6 +1,7 @@
 package com.game.service.guild.handler;
 
 import com.game.actor.core.ActorSystem;
+import com.game.api.common.MethodId;
 import com.game.api.common.ProtocolConstants;
 import com.game.core.handler.BaseHandler;
 import com.game.core.handler.annotation.Protocol;
@@ -26,20 +27,9 @@ public class GuildHandler extends BaseHandler {
     private final ActorSystem<GuildActor> guildActorSystem;
 
     /**
-     * 获取公会信息
-     */
-    @Protocol(methodId = 0x01, desc = "获取公会信息")
-    public Message getGuildInfo(Session session) {
-        long roleId = session.getRoleId();
-        log.debug("获取公会信息: roleId={}", roleId);
-        // TODO: 实际实现
-        return null;
-    }
-
-    /**
      * 创建公会
      */
-    @Protocol(methodId = 0x02, desc = "创建公会")
+    @Protocol(methodId = MethodId.Guild.CREATE, desc = "创建公会")
     public Message createGuild(Session session, byte[] requestData) {
         long roleId = session.getRoleId();
         log.info("创建公会: roleId={}", roleId);
@@ -48,9 +38,31 @@ public class GuildHandler extends BaseHandler {
     }
 
     /**
+     * 获取公会信息
+     */
+    @Protocol(methodId = MethodId.Guild.GET_INFO, desc = "获取公会信息")
+    public Message getGuildInfo(Session session) {
+        long roleId = session.getRoleId();
+        log.debug("获取公会信息: roleId={}", roleId);
+        // TODO: 实际实现
+        return null;
+    }
+
+    /**
+     * 搜索公会
+     */
+    @Protocol(methodId = MethodId.Guild.SEARCH, desc = "搜索公会")
+    public Message searchGuild(Session session, byte[] requestData) {
+        long roleId = session.getRoleId();
+        log.debug("搜索公会: roleId={}", roleId);
+        // TODO: 实际实现
+        return null;
+    }
+
+    /**
      * 申请加入公会
      */
-    @Protocol(methodId = 0x03, desc = "申请加入公会")
+    @Protocol(methodId = MethodId.Guild.APPLY_JOIN, desc = "申请加入公会")
     public Message applyJoin(Session session, byte[] requestData) {
         long roleId = session.getRoleId();
         log.info("申请加入公会: roleId={}", roleId);
@@ -59,9 +71,20 @@ public class GuildHandler extends BaseHandler {
     }
 
     /**
+     * 处理加入申请
+     */
+    @Protocol(methodId = MethodId.Guild.HANDLE_APPLY, desc = "处理加入申请")
+    public Message handleApply(Session session, byte[] requestData) {
+        long roleId = session.getRoleId();
+        log.info("处理公会申请: roleId={}", roleId);
+        // TODO: 实际实现
+        return null;
+    }
+
+    /**
      * 退出公会
      */
-    @Protocol(methodId = 0x04, desc = "退出公会")
+    @Protocol(methodId = MethodId.Guild.LEAVE, desc = "退出公会")
     public Message leaveGuild(Session session) {
         long roleId = session.getRoleId();
         log.info("退出公会: roleId={}", roleId);
@@ -70,12 +93,12 @@ public class GuildHandler extends BaseHandler {
     }
 
     /**
-     * 获取公会成员列表
+     * 踢出成员
      */
-    @Protocol(methodId = 0x05, desc = "获取成员列表")
-    public Message getMemberList(Session session) {
+    @Protocol(methodId = MethodId.Guild.KICK_MEMBER, desc = "踢出成员")
+    public Message kickMember(Session session, byte[] requestData) {
         long roleId = session.getRoleId();
-        log.debug("获取公会成员列表: roleId={}", roleId);
+        log.info("踢出公会成员: roleId={}", roleId);
         // TODO: 实际实现
         return null;
     }
@@ -83,7 +106,7 @@ public class GuildHandler extends BaseHandler {
     /**
      * 公会捐献
      */
-    @Protocol(methodId = 0x10, desc = "公会捐献")
+    @Protocol(methodId = MethodId.Guild.DONATE, desc = "公会捐献")
     public Message donate(Session session, byte[] requestData) {
         long roleId = session.getRoleId();
         log.info("公会捐献: roleId={}", roleId);
@@ -92,23 +115,34 @@ public class GuildHandler extends BaseHandler {
     }
 
     /**
-     * 审批申请
+     * 修改成员职位
      */
-    @Protocol(methodId = 0x20, desc = "审批申请")
-    public Message approveApply(Session session, byte[] requestData) {
+    @Protocol(methodId = MethodId.Guild.CHANGE_POSITION, desc = "修改成员职位")
+    public Message changePosition(Session session, byte[] requestData) {
         long roleId = session.getRoleId();
-        log.info("审批公会申请: roleId={}", roleId);
+        log.info("修改公会成员职位: roleId={}", roleId);
         // TODO: 实际实现
         return null;
     }
 
     /**
-     * 踢出成员
+     * 转让会长
      */
-    @Protocol(methodId = 0x21, desc = "踢出成员")
-    public Message kickMember(Session session, byte[] requestData) {
+    @Protocol(methodId = MethodId.Guild.TRANSFER_LEADER, desc = "转让会长")
+    public Message transferLeader(Session session, byte[] requestData) {
         long roleId = session.getRoleId();
-        log.info("踢出公会成员: roleId={}", roleId);
+        log.info("转让会长: roleId={}", roleId);
+        // TODO: 实际实现
+        return null;
+    }
+
+    /**
+     * 修改公会设置
+     */
+    @Protocol(methodId = MethodId.Guild.CHANGE_SETTING, desc = "修改公会设置")
+    public Message changeSetting(Session session, byte[] requestData) {
+        long roleId = session.getRoleId();
+        log.info("修改公会设置: roleId={}", roleId);
         // TODO: 实际实现
         return null;
     }

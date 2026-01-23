@@ -106,6 +106,12 @@ public class Session {
     @Setter
     private boolean authenticated;
 
+    /**
+     * 登录 Token (用于验证)
+     */
+    @Setter
+    private String token;
+
     // ==================== 扩展属性 ====================
 
     /**

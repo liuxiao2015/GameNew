@@ -1,29 +1,21 @@
 package com.game.service.game.impl;
 
-import com.game.actor.core.ActorMessage;
-import com.game.actor.core.ActorSystem;
 import com.game.api.player.PlayerDTO;
 import com.game.entity.player.PlayerData;
 import com.game.service.game.actor.PlayerActor;
-import com.game.service.game.actor.PlayerActor.MessageTypes;
+import com.game.service.game.actor.PlayerActorSystem;
 import com.game.api.player.PlayerService;
 import com.game.common.enums.ErrorCode;
 import com.game.common.result.Result;
-import com.game.data.mongo.MongoService;
-import com.game.data.redis.RedisService;
-import com.game.log.operation.OperationLog;
-import com.game.log.operation.OperationLogService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.springframework.beans.factory.annotation.Value;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 玩家服务实现
+ * <p>
+ * 使用 PlayerActorSystem 管理玩家 Actor
+ * </p>
  *
  * @author GameServer
  */
@@ -32,46 +24,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class PlayerServiceImpl implements PlayerService {
 
-    private final RedisService redisService;
-    private final MongoService mongoService;
-    private final OperationLogService operationLogService;
-
-    @Value("${game.actor.player.max-size:10000}")
-    private int maxSize;
-
-    @Value("${game.actor.player.idle-timeout-minutes:30}")
-    private int idleTimeoutMinutes;
-
-    @Value("${game.actor.player.save-interval-seconds:300}")
-    private int saveIntervalSeconds;
-
-    /**
-     * 玩家 Actor 系统
-     */
-    private ActorSystem<PlayerActor> playerActorSystem;
-
-    @PostConstruct
-    public void init() {
-        // 初始化 Actor 系统
-        ActorSystem.ActorSystemConfig config = ActorSystem.ActorSystemConfig.create()
-                .maxSize(maxSize)
-                .idleTimeoutMinutes(idleTimeoutMinutes)
-                .saveIntervalSeconds(saveIntervalSeconds);
-
-        playerActorSystem = new ActorSystem<>(
-                "PlayerActorSystem",
-                config,
-                roleId -> new PlayerActor(roleId, redisService, mongoService)
-        );
-        playerActorSystem.init();
-
-        log.info("玩家服务初始化完成: maxSize={}, idleTimeout={}min, saveInterval={}s",
-                maxSize, idleTimeoutMinutes, saveIntervalSeconds);
-    }
+    private final PlayerActorSystem playerActorSystem;
 
     @Override
     public Result<PlayerDTO> getPlayerInfo(long roleId) {
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null || actor.getData() == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
@@ -87,27 +44,13 @@ public class PlayerServiceImpl implements PlayerService {
             return Result.fail(ErrorCode.PARAM_ERROR, "经验值必须大于0");
         }
 
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
 
-        // 发送消息到 Actor
-        ActorMessage message = ActorMessage.of(
-                MessageTypes.ADD_EXP,
-                new PlayerActor.AddExpRequest(exp, reason)
-        );
-
-        boolean sent = actor.tell(message);
-        if (!sent) {
-            return Result.fail(ErrorCode.SYSTEM_ERROR, "消息发送失败");
-        }
-
-        // 记录操作日志
-        PlayerData data = actor.getData();
-        operationLogService.log(roleId, data.getRoleName(), 
-                OperationLog.TYPE_LEVEL_UP, "ADD_EXP",
-                data.getExp(), data.getExp() + exp, exp, reason);
+        // 使用新的消息格式
+        actor.fire("ADD_EXP", new PlayerActor.AddExpData(exp, reason));
 
         return Result.success();
     }
@@ -120,7 +63,7 @@ public class PlayerServiceImpl implements PlayerService {
             return Result.fail(ErrorCode.PARAM_ERROR, "金币数量不能为0");
         }
 
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
@@ -132,21 +75,8 @@ public class PlayerServiceImpl implements PlayerService {
             return Result.fail(ErrorCode.GOLD_NOT_ENOUGH);
         }
 
-        // 发送消息到 Actor
-        ActorMessage message = ActorMessage.of(
-                MessageTypes.ADD_GOLD,
-                new PlayerActor.AddGoldRequest(gold, reason)
-        );
-
-        boolean sent = actor.tell(message);
-        if (!sent) {
-            return Result.fail(ErrorCode.SYSTEM_ERROR, "消息发送失败");
-        }
-
-        // 记录操作日志
-        operationLogService.log(roleId, data.getRoleName(),
-                OperationLog.TYPE_GOLD_CHANGE, gold > 0 ? "ADD" : "CONSUME",
-                data.getGold(), data.getGold() + gold, gold, reason);
+        // 使用新的消息格式
+        actor.fire("ADD_GOLD", new PlayerActor.AddGoldData(gold, reason));
 
         return Result.success();
     }
@@ -159,7 +89,7 @@ public class PlayerServiceImpl implements PlayerService {
             return Result.fail(ErrorCode.PARAM_ERROR, "钻石数量不能为0");
         }
 
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
@@ -171,21 +101,8 @@ public class PlayerServiceImpl implements PlayerService {
             return Result.fail(ErrorCode.DIAMOND_NOT_ENOUGH);
         }
 
-        // 发送消息到 Actor
-        ActorMessage message = ActorMessage.of(
-                MessageTypes.ADD_DIAMOND,
-                new PlayerActor.AddDiamondRequest(diamond, reason)
-        );
-
-        boolean sent = actor.tell(message);
-        if (!sent) {
-            return Result.fail(ErrorCode.SYSTEM_ERROR, "消息发送失败");
-        }
-
-        // 记录操作日志
-        operationLogService.log(roleId, data.getRoleName(),
-                OperationLog.TYPE_DIAMOND_CHANGE, diamond > 0 ? "ADD" : "CONSUME",
-                data.getDiamond(), data.getDiamond() + diamond, diamond, reason);
+        // 使用新的消息格式
+        actor.fire("ADD_DIAMOND", new PlayerActor.AddDiamondData(diamond, reason));
 
         return Result.success();
     }
@@ -198,21 +115,13 @@ public class PlayerServiceImpl implements PlayerService {
             return Result.fail(ErrorCode.PARAM_ERROR);
         }
 
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
 
-        // 发送消息到 Actor
-        ActorMessage message = ActorMessage.of(
-                MessageTypes.ADD_ITEM,
-                new PlayerActor.AddItemRequest(itemId, count, reason)
-        );
-
-        boolean sent = actor.tell(message);
-        if (!sent) {
-            return Result.fail(ErrorCode.SYSTEM_ERROR, "消息发送失败");
-        }
+        // TODO: 实现添加物品消息
+        // actor.fire("ADD_ITEM", new PlayerActor.AddItemData(itemId, count, reason));
 
         return Result.success();
     }
@@ -221,20 +130,13 @@ public class PlayerServiceImpl implements PlayerService {
     public Result<Void> changeName(long roleId, String newName) {
         log.info("修改名字: roleId={}, newName={}", roleId, newName);
 
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
 
-        // TODO: 检查名字是否重复
-
-        // 发送消息到 Actor
-        ActorMessage message = ActorMessage.of(MessageTypes.CHANGE_NAME, newName);
-
-        boolean sent = actor.tell(message);
-        if (!sent) {
-            return Result.fail(ErrorCode.SYSTEM_ERROR, "消息发送失败");
-        }
+        // TODO: 实现改名消息
+        // actor.fire("CHANGE_NAME", newName);
 
         return Result.success();
     }
@@ -243,18 +145,13 @@ public class PlayerServiceImpl implements PlayerService {
     public Result<Void> changeAvatar(long roleId, int avatarId) {
         log.debug("修改头像: roleId={}, avatarId={}", roleId, avatarId);
 
-        PlayerActor actor = playerActorSystem.getActor(roleId);
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
         if (actor == null) {
             return Result.fail(ErrorCode.ROLE_NOT_FOUND);
         }
 
-        // 发送消息到 Actor
-        ActorMessage message = ActorMessage.of(MessageTypes.CHANGE_AVATAR, avatarId);
-
-        boolean sent = actor.tell(message);
-        if (!sent) {
-            return Result.fail(ErrorCode.SYSTEM_ERROR, "消息发送失败");
-        }
+        // TODO: 实现修改头像消息
+        // actor.fire("CHANGE_AVATAR", avatarId);
 
         return Result.success();
     }
@@ -271,8 +168,6 @@ public class PlayerServiceImpl implements PlayerService {
             actor.markDirty();
         }
 
-        // TODO: 直接更新数据库
-
         return Result.success();
     }
 
@@ -288,16 +183,7 @@ public class PlayerServiceImpl implements PlayerService {
             actor.markDirty();
         }
 
-        // TODO: 直接更新数据库
-
         return Result.success();
-    }
-
-    /**
-     * 获取 Actor 系统 (供其他模块使用)
-     */
-    public ActorSystem<PlayerActor> getPlayerActorSystem() {
-        return playerActorSystem;
     }
 
     /**

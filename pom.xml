@@ -22,9 +22,10 @@
         <module>framework/framework-data</module>
         <module>framework/framework-log</module>
 
-        <!-- 公共模块 (Common) - API 和实体定义 -->
+        <!-- 公共模块 (Common) - API、实体、配置定义 -->
         <module>common/common-api</module>
         <module>common/common-entity</module>
+        <module>common/common-config</module>
 
         <!-- 网关 (Gateway) -->
         <module>gateway/gateway-server</module>
@@ -168,6 +169,11 @@
             <dependency>
                 <groupId>com.game</groupId>
                 <artifactId>common-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.game</groupId>
+                <artifactId>common-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

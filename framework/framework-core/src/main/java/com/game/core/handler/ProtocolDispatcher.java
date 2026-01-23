@@ -5,12 +5,14 @@ import com.game.common.exception.BizException;
 import com.game.core.context.RequestContext;
 import com.game.core.net.codec.GameMessage;
 import com.game.core.net.session.Session;
+import com.game.core.trace.TraceContext;
 import com.google.protobuf.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Parameter;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -37,6 +39,8 @@ import java.util.concurrent.Executors;
 public class ProtocolDispatcher {
 
     private final ProtocolHandlerRegistry registry;
+    private final com.game.core.monitor.ServerMonitor serverMonitor;
+    private final com.game.core.alert.AlertService alertService;
 
     /**
      * 异步执行线程池 (使用虚拟线程)
@@ -54,11 +58,21 @@ public class ProtocolDispatcher {
         int protocolKey = message.getProtocolId();
         long startNanos = System.nanoTime();
 
+        // 初始化链路追踪
+        String traceId = TraceContext.start();
+        TraceContext.setRoleId(session.getRoleId());
+        TraceContext.setAccountId(session.getAccountId());
+        TraceContext.setServerId(session.getServerId());
+
         // 初始化请求上下文
         RequestContext context = RequestContext.init();
         context.setSession(session);
         context.setSeqId(message.getSeqId());
         context.setProtocolKey(protocolKey);
+        context.setTraceId(traceId);
+
+        // 标记是否异步执行（异步时主线程不清理上下文，由异步线程负责）
+        boolean isAsync = false;
 
         try {
             // 1. 查找处理方法
@@ -92,19 +106,31 @@ public class ProtocolDispatcher {
 
             // 5. 异步执行
             if (protocolMethod.isAsync()) {
+                // 标记为异步，主线程不清理上下文
+                isAsync = true;
+                
+                // 复制当前追踪上下文
+                Map<String, String> traceContextMap = TraceContext.getCopyOfContextMap();
+                
                 asyncExecutor.execute(() -> {
                     try {
+                        // 恢复追踪上下文
+                        TraceContext.setContextMap(traceContextMap);
+                        
                         RequestContext asyncContext = RequestContext.init();
                         asyncContext.setSession(session);
                         asyncContext.setSeqId(message.getSeqId());
                         asyncContext.setProtocolKey(protocolKey);
+                        asyncContext.setTraceId(traceId);
                         
                         GameMessage response = executeHandler(session, message, protocolMethod, startNanos);
                         if (response != null) {
                             session.send(response);
                         }
                     } finally {
+                        // 异步线程负责清理上下文
                         RequestContext.clear();
+                        TraceContext.end();
                     }
                 });
                 return null; // 异步不立即返回
@@ -117,6 +143,7 @@ public class ProtocolDispatcher {
             // 业务异常 - 正常的业务错误，不打印堆栈
             log.info("业务异常: protocolKey={}, code={}, message={}, roleId={}",
                     protocolKey, e.getCode(), e.getMessage(), session.getRoleId());
+            serverMonitor.recordRequest(false);
             return createErrorResponse(message, e.getCode(), e.getMessage());
 
         } catch (Exception e) {
@@ -127,16 +154,26 @@ public class ProtocolDispatcher {
             if (cause instanceof BizException bizEx) {
                 log.info("业务异常: protocolKey={}, code={}, message={}, roleId={}",
                         protocolKey, bizEx.getCode(), bizEx.getMessage(), session.getRoleId());
+                serverMonitor.recordRequest(false);
                 return createErrorResponse(message, bizEx.getCode(), bizEx.getMessage());
             }
 
             log.error("协议处理异常: protocolKey={}, session={}, roleId={}",
                     protocolKey, session.getSessionId(), session.getRoleId(), cause);
+            
+            // 发送告警
+            alertService.alertException("协议处理异常: " + protocolKey, cause);
+            serverMonitor.recordRequest(false);
+            
             return createErrorResponse(message, ErrorCode.SYSTEM_ERROR);
 
         } finally {
-            // 清理请求上下文
-            RequestContext.clear();
+            // 只有同步执行时才在主线程清理上下文
+            // 异步执行由异步线程负责清理
+            if (!isAsync) {
+                RequestContext.clear();
+                TraceContext.end();
+            }
         }
     }
 
@@ -161,9 +198,13 @@ public class ProtocolDispatcher {
             if (costMs > protocolMethod.getSlowThreshold()) {
                 log.warn("慢请求: {} cost={}ms, session={}, roleId={}",
                         protocolMethod.getName(), costMs, session.getSessionId(), session.getRoleId());
+                alertService.alertPerformance(protocolMethod.getName(), costMs, protocolMethod.getSlowThreshold());
             }
 
-            // 5. 构建响应
+            // 5. 记录成功
+            serverMonitor.recordRequest(true);
+
+            // 6. 构建响应
             return createResponse(message, result);
 
         } catch (Exception e) {
