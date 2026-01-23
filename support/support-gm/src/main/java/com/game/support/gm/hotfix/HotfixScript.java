@@ -42,6 +42,21 @@ public class HotfixScript {
     private boolean enabled;
 
     /**
+     * 版本号
+     */
+    private int version;
+
+    /**
+     * 脚本类型 (fix: 修复, query: 查询, maintenance: 维护)
+     */
+    private String scriptType;
+
+    /**
+     * 标签 (用于分类)
+     */
+    private String[] tags;
+
+    /**
      * 创建者
      */
     private String creator;
@@ -55,4 +70,9 @@ public class HotfixScript {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 备注
+     */
+    private String remark;
 }

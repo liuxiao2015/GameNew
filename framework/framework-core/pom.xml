@@ -63,6 +63,13 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
+        <!-- Dubbo (for DubboTraceFilter) -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

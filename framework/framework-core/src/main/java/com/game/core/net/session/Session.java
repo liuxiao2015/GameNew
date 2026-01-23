@@ -112,6 +112,38 @@ public class Session {
     @Setter
     private String token;
 
+    // ==================== 角色属性 (用于广播过滤) ====================
+
+    /**
+     * 角色等级
+     */
+    @Setter
+    private int level;
+
+    /**
+     * VIP 等级
+     */
+    @Setter
+    private int vipLevel;
+
+    /**
+     * 公会 ID
+     */
+    @Setter
+    private long guildId;
+
+    /**
+     * 当前场景 ID
+     */
+    @Setter
+    private long sceneId;
+
+    /**
+     * 当前房间 ID
+     */
+    @Setter
+    private long roomId;
+
     // ==================== 扩展属性 ====================
 
     /**
@@ -246,10 +278,27 @@ public class Session {
     }
 
     /**
-     * 发送推送
+     * 发送推送 (带推送类型)
      */
     public void sendPush(int pushType, int protocolId, byte[] body) {
         send(GameMessage.createPush(pushType, protocolId, body));
+    }
+
+    /**
+     * 发送推送 (默认推送类型)
+     */
+    public void sendPush(int protocolId, byte[] body) {
+        send(GameMessage.createPush(0, protocolId, body));
+    }
+
+    /**
+     * 关闭连接（带原因）
+     * 
+     * @param reason 关闭原因
+     */
+    public void close(String reason) {
+        log.info("关闭连接: sessionId={}, roleId={}, reason={}", sessionId, roleId, reason);
+        close();  // 调用无参 close() 方法执行实际关闭
     }
 
     /**
@@ -266,6 +315,9 @@ public class Session {
 
     /**
      * 关闭连接
+     * <p>
+     * 无参版本，执行实际的关闭逻辑
+     * </p>
      */
     public void close() {
         if (channel != null && channel.isOpen()) {

@@ -1,6 +1,7 @@
 package com.game.service.gm.controller;
 
 import com.game.common.result.Result;
+import com.game.core.config.game.ConfigLoader;
 import com.game.data.redis.RedisService;
 import com.game.service.gm.annotation.GmLog;
 import com.game.service.gm.annotation.RequirePermission;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class GmServerController {
 
     private final RedisService redisService;
+    private final ConfigLoader configLoader;
 
     /**
      * 获取服务器状态
@@ -98,14 +100,17 @@ public class GmServerController {
     }
 
     /**
-     * 热更新配置
+     * 热更新配置 (简化接口，详细操作请使用 /gm/config)
      */
     @PostMapping("/reload")
     @RequirePermission("server:reload")
     @GmLog(module = "服务器管理", operation = "热更新配置")
     public Result<Void> reloadConfig(@RequestParam String configType) {
-        // 发布配置更新消息
-        redisService.publish("server:config:reload", configType);
+        if ("all".equalsIgnoreCase(configType)) {
+            configLoader.reloadAllAndBroadcast("gm");
+        } else {
+            configLoader.reloadAndBroadcast(configType, "gm");
+        }
         return Result.success();
     }
 

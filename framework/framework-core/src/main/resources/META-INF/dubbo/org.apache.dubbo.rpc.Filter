@@ -1,0 +1,1 @@
+traceFilter=com.game.core.trace.DubboTraceFilter
