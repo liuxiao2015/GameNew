@@ -106,7 +106,7 @@ public class GuildBusinessService {
             guildData.setLeaderName(player.getRoleName());
             guildData.setLevel(1);
             guildData.setMaxMember(50);
-            guildData.setCreateTime(System.currentTimeMillis());
+            guildData.setGuildCreateTime(System.currentTimeMillis());
 
             // 添加创建者为会长
             GuildData.GuildMember leader = new GuildData.GuildMember();
@@ -301,7 +301,7 @@ public class GuildBusinessService {
                 .setLeaderName(data.getLeaderName())
                 .setMemberCount(data.getMemberCount())
                 .setMaxMember(data.getMaxMember())
-                .setCreateTime(data.getCreateTime())
+                .setCreateTime(data.getGuildCreateTime())
                 .setJoinType(data.getJoinType())
                 .setJoinLevel(data.getJoinLevel())
                 .build();

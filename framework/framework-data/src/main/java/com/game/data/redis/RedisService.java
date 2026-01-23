@@ -441,4 +441,48 @@ public class RedisService {
     public void publish(String channel, String message) {
         redisTemplate.convertAndSend(channel, message);
     }
+
+    // ==================== 别名方法 (兼容性) ====================
+
+    /**
+     * List 左侧添加 (别名)
+     */
+    public Long leftPush(String key, String value) {
+        return lLeftPush(key, value);
+    }
+
+    /**
+     * List 获取范围 (别名)
+     */
+    public List<String> range(String key, long start, long end) {
+        return lRange(key, start, end);
+    }
+
+    /**
+     * List 截取 (保留指定范围)
+     */
+    public void lTrim(String key, long start, long end) {
+        redisTemplate.opsForList().trim(key, start, end);
+    }
+
+    /**
+     * List 截取 (别名)
+     */
+    public void trim(String key, long start, long end) {
+        lTrim(key, start, end);
+    }
+
+    /**
+     * 获取字符串值 (别名)
+     */
+    public String getString(String key) {
+        return get(key);
+    }
+
+    /**
+     * 设置字符串值 (别名)
+     */
+    public void setString(String key, String value) {
+        set(key, value);
+    }
 }

@@ -1,6 +1,6 @@
 package com.game.core.event.events;
 
-import com.game.core.event.GameEvent;
+import com.game.core.event.BaseGameEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor
-public class ConfigReloadEvent extends GameEvent {
+public class ConfigReloadEvent extends BaseGameEvent {
 
     /**
      * 配置文件名 (null 表示全部重载)

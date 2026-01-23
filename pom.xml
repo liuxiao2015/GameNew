@@ -40,6 +40,7 @@
         <module>services/service-gm</module>
         <module>services/service-robot</module>
         <module>services/service-launcher</module>
+        <module>services/service-pay</module>
     </modules>
 
     <!-- 属性配置 -->
@@ -79,6 +80,12 @@
         <!-- Spring Cloud Alibaba -->
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
+
+        <!-- 服务治理 -->
+        <sentinel.version>1.8.7</sentinel.version>
+
+        <!-- 链路追踪 -->
+        <micrometer-tracing.version>1.2.2</micrometer-tracing.version>
 
         <!-- 工具 -->
         <lombok.version>1.18.30</lombok.version>
@@ -214,6 +221,23 @@
                 <version>${nacos.version}</version>
             </dependency>
 
+            <!-- ==================== Sentinel (服务熔断降级) ==================== -->
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-core</artifactId>
+                <version>${sentinel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-apache-dubbo3-adapter</artifactId>
+                <version>${sentinel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.csp</groupId>
+                <artifactId>sentinel-transport-simple-http</artifactId>
+                <version>${sentinel.version}</version>
+            </dependency>
+
             <!-- ==================== MongoDB ==================== -->
             <dependency>
                 <groupId>org.mongodb</groupId>
@@ -275,11 +299,6 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-apache-dubbo3-adapter</artifactId>
-            <version>1.8.7</version>
         </dependency>
 
         <!-- ==================== Groovy (热更新脚本) ==================== -->
@@ -384,6 +403,14 @@
                         <compilerArgs>
                             <arg>--enable-preview</arg>
                         </compilerArgs>
+                        <!-- Lombok 注解处理器 -->
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
 

@@ -55,7 +55,7 @@ public class DailyResetJob {
         long startTime = System.currentTimeMillis();
 
         // 使用 Redis 检查是否已执行 (防止重复执行)
-        Boolean alreadyDone = redisService.setIfAbsent(lockKey, "1", 3600 * 24);
+        Boolean alreadyDone = redisService.setIfAbsent(lockKey, "1", java.time.Duration.ofHours(24));
         if (!Boolean.TRUE.equals(alreadyDone)) {
             XxlJobHelper.log("每日重置任务已执行过，跳过");
             return;

@@ -1,6 +1,6 @@
 package com.game.core.event.events;
 
-import com.game.core.event.GameEvent;
+import com.game.core.event.BaseGameEvent;
 import lombok.Getter;
 
 /**
@@ -9,7 +9,7 @@ import lombok.Getter;
  * @author GameServer
  */
 @Getter
-public abstract class PlayerEvent extends GameEvent {
+public abstract class PlayerEvent extends BaseGameEvent {
 
     protected PlayerEvent(long roleId) {
         super(roleId);

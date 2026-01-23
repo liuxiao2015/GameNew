@@ -31,7 +31,7 @@ public class DistributedEventServiceImpl implements DistributedEventService {
     public void publishConfigReload(String configName, long version) {
         log.info("收到配置刷新事件: configName={}, version={}", configName, version);
         try {
-            configLoader.reload(configName);
+            configLoader.reload(configName, "distributed");
             eventBus.publish(new ConfigReloadEvent(configName, version));
         } catch (Exception e) {
             log.error("配置刷新失败: configName={}", configName, e);

@@ -1,26 +1,28 @@
 package com.game.core.cluster;
 
 import jakarta.annotation.PostConstruct;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.common.URL;
+import org.apache.dubbo.config.ApplicationConfig;
 import org.apache.dubbo.config.RegistryConfig;
+import org.apache.dubbo.registry.NotifyListener;
 import org.apache.dubbo.registry.Registry;
 import org.apache.dubbo.registry.RegistryFactory;
 import org.apache.dubbo.rpc.model.ApplicationModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
  * 基于 Nacos 的服务注册中心
  * <p>
- * 直接使用 Spring Cloud DiscoveryClient / Dubbo Registry，无需额外 Redis 存储：
+ * 直接使用 Dubbo Registry，无需额外 Redis 存储：
  * <ul>
  *     <li>服务发现直接从 Nacos 获取</li>
  *     <li>健康检查由 Nacos 自动处理</li>
@@ -32,19 +34,21 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class NacosServiceRegistry {
-
-    /**
-     * Spring Cloud 服务发现客户端
-     */
-    private final DiscoveryClient discoveryClient;
 
     @Value("${spring.application.name:unknown}")
     private String applicationName;
 
     @Value("${game.server.id:1}")
     private int serverId;
+
+    @Autowired(required = false)
+    private RegistryConfig registryConfig;
+
+    /**
+     * 服务实例缓存
+     */
+    private final Map<String, List<ServiceInstance>> instanceCache = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void init() {
@@ -55,17 +59,17 @@ public class NacosServiceRegistry {
     // ==================== 服务发现 ====================
 
     /**
-     * 获取所有服务名称
+     * 获取所有已知服务名称
      */
     public List<String> getServices() {
-        return discoveryClient.getServices();
+        return new ArrayList<>(instanceCache.keySet());
     }
 
     /**
      * 获取指定服务的所有实例
      */
     public List<ServiceInstance> getInstances(String serviceName) {
-        return discoveryClient.getInstances(serviceName);
+        return instanceCache.getOrDefault(serviceName, Collections.emptyList());
     }
 
     /**
@@ -89,69 +93,42 @@ public class NacosServiceRegistry {
         return !getInstances(serviceName).isEmpty();
     }
 
+    /**
+     * 注册服务实例（用于手动注册）
+     */
+    public void registerInstance(String serviceName, ServiceInstance instance) {
+        instanceCache.computeIfAbsent(serviceName, k -> new ArrayList<>()).add(instance);
+        log.info("注册服务实例: service={}, instance={}", serviceName, instance.getInstanceId());
+    }
+
+    /**
+     * 更新服务实例列表
+     */
+    public void updateInstances(String serviceName, List<ServiceInstance> instances) {
+        instanceCache.put(serviceName, new ArrayList<>(instances));
+        log.debug("更新服务实例: service={}, count={}", serviceName, instances.size());
+    }
+
     // ==================== 统计信息 ====================
 
     /**
      * 获取所有服务实例统计
      */
     public Map<String, Integer> getServiceInstanceCounts() {
-        return getServices().stream()
+        return instanceCache.entrySet().stream()
                 .collect(Collectors.toMap(
-                        name -> name,
-                        name -> getInstances(name).size()
+                        Map.Entry::getKey,
+                        e -> e.getValue().size()
                 ));
     }
 
-    /**
-     * 获取游戏服务实例信息
-     */
-    public List<GameServiceInstance> getGameServiceInstances(String serviceName) {
-        return getInstances(serviceName).stream()
-                .map(this::toGameServiceInstance)
-                .toList();
-    }
+    // ==================== 服务实例定义 ====================
 
     /**
-     * 转换为游戏服务实例
+     * 服务实例信息
      */
-    private GameServiceInstance toGameServiceInstance(ServiceInstance instance) {
-        Map<String, String> metadata = instance.getMetadata();
-        
-        return GameServiceInstance.builder()
-                .instanceId(instance.getInstanceId())
-                .serviceName(instance.getServiceId())
-                .host(instance.getHost())
-                .port(instance.getPort())
-                .serverId(parseServerId(metadata.get("serverId")))
-                .version(metadata.getOrDefault("version", "unknown"))
-                .startTime(parseLong(metadata.get("startTime"), System.currentTimeMillis()))
-                .build();
-    }
-
-    private int parseServerId(String value) {
-        try {
-            return value != null ? Integer.parseInt(value) : 0;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private long parseLong(String value, long defaultValue) {
-        try {
-            return value != null ? Long.parseLong(value) : defaultValue;
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
-
-    // ==================== 游戏服务实例 ====================
-
-    /**
-     * 游戏服务实例信息
-     */
-    @lombok.Data
-    @lombok.Builder
-    public static class GameServiceInstance {
+    @Data
+    public static class ServiceInstance {
         private String instanceId;
         private String serviceName;
         private String host;
@@ -159,5 +136,16 @@ public class NacosServiceRegistry {
         private int serverId;
         private String version;
         private long startTime;
+        private Map<String, String> metadata = new HashMap<>();
+
+        public static ServiceInstance of(String serviceName, String host, int port) {
+            ServiceInstance instance = new ServiceInstance();
+            instance.setInstanceId(serviceName + "-" + host + ":" + port);
+            instance.setServiceName(serviceName);
+            instance.setHost(host);
+            instance.setPort(port);
+            instance.setStartTime(System.currentTimeMillis());
+            return instance;
+        }
     }
 }

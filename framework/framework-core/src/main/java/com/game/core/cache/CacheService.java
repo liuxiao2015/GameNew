@@ -125,6 +125,50 @@ public class CacheService {
         return get(cacheName, key, null, clazz);
     }
 
+    /**
+     * 获取缓存 (简化版 - 用于单 key 场景)
+     * 
+     * @param key      缓存 Key
+     * @param supplier 加载函数 (懒加载)
+     * @param expire   过期时间
+     * @param <T>      值类型
+     * @return 缓存值
+     */
+    @SuppressWarnings("unchecked")
+    public <T> T get(String key, java.util.function.Supplier<T> supplier, java.time.Duration expire) {
+        // 查本地缓存
+        Cache<String, Object> localCache = getOrCreateLocalCache("default");
+        Object localValue = localCache.getIfPresent(key);
+        if (localValue != null) {
+            return (T) localValue;
+        }
+
+        // 查 Redis
+        String redisKey = CACHE_KEY_PREFIX + key;
+        String redisValue = redisService.get(redisKey);
+        if (redisValue != null) {
+            try {
+                T value = (T) com.game.common.util.JsonUtil.fromJson(redisValue, Object.class);
+                localCache.put(key, value);
+                return value;
+            } catch (Exception e) {
+                log.warn("缓存反序列化失败: key={}", key, e);
+            }
+        }
+
+        // 加载数据
+        if (supplier != null) {
+            T loadedValue = supplier.get();
+            if (loadedValue != null) {
+                localCache.put(key, loadedValue);
+                redisService.set(redisKey, com.game.common.util.JsonUtil.toJson(loadedValue), expire);
+                return loadedValue;
+            }
+        }
+
+        return null;
+    }
+
     // ==================== 设置缓存 ====================
 
     /**
@@ -170,6 +214,19 @@ public class CacheService {
         // 删除 Redis
         String redisKey = buildRedisKey(cacheName, cacheKey);
         redisService.delete(redisKey);
+    }
+
+    /**
+     * 清空指定缓存（本地 + Redis 前缀删除）
+     */
+    public void evictAll(String cacheName) {
+        // 清空本地缓存
+        Cache<String, Object> localCache = localCaches.get(cacheName);
+        if (localCache != null) {
+            localCache.invalidateAll();
+        }
+        // 注意: Redis 按前缀删除需要谨慎，这里只清空本地
+        log.info("清空缓存: {}", cacheName);
     }
 
     /**

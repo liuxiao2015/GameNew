@@ -1,85 +1,102 @@
 package com.game.service.rank.constants;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * 排行榜类型常量
+ * 排行榜类型枚举
  *
  * @author GameServer
  */
-public final class RankType {
+public enum RankType {
 
-    private RankType() {}
+    /** 战力榜 */
+    COMBAT_POWER(1, "combat_power", "战力榜"),
+    
+    /** 等级榜 */
+    LEVEL(2, "level", "等级榜"),
+    
+    /** 充值榜 */
+    RECHARGE(3, "recharge", "充值榜"),
+    
+    /** 消费榜 */
+    CONSUME(4, "consume", "消费榜"),
+    
+    /** 副本榜 */
+    DUNGEON(5, "dungeon", "副本榜"),
+    
+    /** 竞技场榜 */
+    ARENA(6, "arena", "竞技场榜"),
+    
+    /** 公会榜 */
+    GUILD(7, "guild", "公会榜");
 
-    /**
-     * 战力榜
-     */
-    public static final int COMBAT_POWER = 1;
+    private static final Map<Integer, RankType> TYPE_MAP = new HashMap<>();
+    private static final Map<String, RankType> NAME_MAP = new HashMap<>();
 
-    /**
-     * 等级榜
-     */
-    public static final int LEVEL = 2;
+    static {
+        for (RankType type : values()) {
+            TYPE_MAP.put(type.type, type);
+            NAME_MAP.put(type.name, type);
+        }
+    }
 
-    /**
-     * 充值榜
-     */
-    public static final int RECHARGE = 3;
+    private final int type;
+    private final String name;
+    private final String desc;
 
-    /**
-     * 消费榜
-     */
-    public static final int CONSUME = 4;
-
-    /**
-     * 副本榜
-     */
-    public static final int DUNGEON = 5;
-
-    /**
-     * 竞技场榜
-     */
-    public static final int ARENA = 6;
-
-    /**
-     * 公会榜
-     */
-    public static final int GUILD = 7;
-
-    /**
-     * 根据类型 ID 获取名称
-     */
-    public static String getName(int type) {
-        return switch (type) {
-            case COMBAT_POWER -> "combat_power";
-            case LEVEL -> "level";
-            case RECHARGE -> "recharge";
-            case CONSUME -> "consume";
-            case DUNGEON -> "dungeon";
-            case ARENA -> "arena";
-            case GUILD -> "guild";
-            default -> "unknown";
-        };
+    RankType(int type, String name, String desc) {
+        this.type = type;
+        this.name = name;
+        this.desc = desc;
     }
 
     /**
-     * 根据类型 ID 获取 Redis Key
+     * 获取类型 ID
      */
-    public static String getRedisKey(int type) {
-        return "rank:" + getName(type);
+    public int getType() {
+        return type;
     }
 
     /**
-     * 根据类型 ID 获取描述
+     * 获取名称
      */
-    public static String getDesc(int type) {
-        return switch (type) {
-            case COMBAT_POWER -> "战力榜";
-            case LEVEL -> "等级榜";
-            case RECHARGE -> "充值榜";
-            case CONSUME -> "消费榜";
-            case DUNGEON -> "副本榜";
-            case ARENA -> "竞技场榜";
-            case GUILD -> "公会榜";
-            default -> "未知榜";
-        };
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * 获取描述
+     */
+    public String getDesc() {
+        return desc;
+    }
+
+    /**
+     * 获取 Redis Key
+     */
+    public String getRedisKey() {
+        return "rank:" + name;
+    }
+
+    /**
+     * 获取排行榜信息 Redis Key
+     */
+    public String getInfoKey() {
+        return "rank:info:" + name;
+    }
+
+    /**
+     * 根据类型 ID 获取枚举
+     */
+    public static RankType of(int type) {
+        return TYPE_MAP.get(type);
+    }
+
+    /**
+     * 根据名称获取枚举
+     */
+    public static RankType of(String name) {
+        return NAME_MAP.get(name);
     }
 }

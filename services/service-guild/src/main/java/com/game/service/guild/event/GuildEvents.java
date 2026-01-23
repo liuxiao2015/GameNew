@@ -1,6 +1,6 @@
 package com.game.service.guild.event;
 
-import com.game.core.event.GameEvent;
+import com.game.core.event.BaseGameEvent;
 import lombok.Getter;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public final class GuildEvents {
      * 公会创建事件
      */
     @Getter
-    public static class GuildCreatedEvent extends GameEvent {
+    public static class GuildCreatedEvent extends BaseGameEvent {
         private final long guildId;
         private final String guildName;
         private final long leaderId;
@@ -36,7 +36,7 @@ public final class GuildEvents {
      * 公会解散事件
      */
     @Getter
-    public static class GuildDisbandedEvent extends GameEvent {
+    public static class GuildDisbandedEvent extends BaseGameEvent {
         private final long guildId;
         private final String guildName;
         private final List<Long> memberIds;
@@ -52,7 +52,7 @@ public final class GuildEvents {
      * 成员加入公会事件
      */
     @Getter
-    public static class MemberJoinedEvent extends GameEvent {
+    public static class MemberJoinedEvent extends BaseGameEvent {
         private final long guildId;
         private final String guildName;
         private final long roleId;
@@ -70,7 +70,7 @@ public final class GuildEvents {
      * 成员离开公会事件
      */
     @Getter
-    public static class MemberLeftEvent extends GameEvent {
+    public static class MemberLeftEvent extends BaseGameEvent {
         private final long guildId;
         private final String guildName;
         private final long roleId;
@@ -94,7 +94,7 @@ public final class GuildEvents {
      * 公会升级事件
      */
     @Getter
-    public static class GuildLevelUpEvent extends GameEvent {
+    public static class GuildLevelUpEvent extends BaseGameEvent {
         private final long guildId;
         private final String guildName;
         private final int oldLevel;
@@ -112,7 +112,7 @@ public final class GuildEvents {
      * 公会捐献事件
      */
     @Getter
-    public static class GuildDonateEvent extends GameEvent {
+    public static class GuildDonateEvent extends BaseGameEvent {
         private final long guildId;
         private final long roleId;
         private final int donateType;

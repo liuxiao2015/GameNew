@@ -38,6 +38,9 @@ public enum ErrorCode {
     CONCURRENT_MODIFY(1008, "数据已被修改"),
     PERMISSION_DENIED(1009, "权限不足"),
     RPC_ERROR(1010, "远程调用失败"),
+    NOT_FOUND(1011, "数据不存在"),
+    OPERATION_FORBIDDEN(1012, "操作被禁止"),
+    LIMIT_EXCEEDED(1013, "超过限制"),
 
     // ==================== 登录/账号错误 2xxx ====================
     ACCOUNT_NOT_FOUND(2001, "账号不存在"),
@@ -116,6 +119,21 @@ public enum ErrorCode {
     GM_AUTH_FAILED(9001, "GM 认证失败"),
     GM_PERMISSION_DENIED(9002, "GM 权限不足"),
     GM_OPERATION_FAILED(9003, "GM 操作失败"),
+
+    // ==================== 支付相关错误 10xxx ====================
+    PAY_ORDER_NOT_FOUND(10001, "订单不存在"),
+    PAY_ORDER_EXPIRED(10002, "订单已过期"),
+    PAY_ORDER_COMPLETED(10003, "订单已完成"),
+    PAY_ORDER_CANCELLED(10004, "订单已取消"),
+    PAY_PRODUCT_NOT_FOUND(10005, "商品不存在"),
+    PAY_PRODUCT_UNAVAILABLE(10006, "商品已下架"),
+    PAY_CHANNEL_NOT_SUPPORTED(10007, "不支持的支付渠道"),
+    PAY_CHANNEL_UNAVAILABLE(10008, "支付渠道不可用"),
+    PAY_AMOUNT_MISMATCH(10009, "支付金额不匹配"),
+    PAY_SIGNATURE_INVALID(10010, "签名验证失败"),
+    PAY_DELIVER_FAILED(10011, "道具发放失败"),
+    PAY_LIMIT_EXCEEDED(10012, "超过购买限制"),
+    PAY_DAILY_LIMIT_EXCEEDED(10013, "超过每日购买限制"),
 
     ;
 

@@ -31,18 +31,16 @@ dubbo:
     retries: 0
     check: false
 
-# ==================== Redis 配置 ====================
-spring.data.redis:
-  host: ${REDIS_HOST:localhost}
-  port: ${REDIS_PORT:6379}
-  password: ${REDIS_PASS:game123}
-  database: ${REDIS_DB:0}
-  lettuce:
-    pool:
-      max-active: 50
-      max-idle: 20
-      min-idle: 5
-      max-wait: 3000ms
+# ==================== Redis 配置（Redisson使用 - 单机模式） ====================
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      database: ${REDIS_DB:1}
+      timeout: 3s
+      connect-timeout: 3s
 
 # ==================== 排行配置 ====================
 game:

@@ -1,6 +1,6 @@
 package com.game.support.gm.hotfix;
 
-import com.game.core.event.GameEvent;
+import com.game.core.event.BaseGameEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor
-public class HotfixSyncEvent extends GameEvent {
+public class HotfixSyncEvent extends BaseGameEvent {
 
     /**
      * 操作类型

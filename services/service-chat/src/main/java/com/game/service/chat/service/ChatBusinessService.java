@@ -7,7 +7,7 @@ import com.game.common.result.Result;
 import com.game.core.cache.CacheService;
 import com.game.core.id.IdService;
 import com.game.core.push.PushService;
-import com.game.core.ratelimit.RateLimiterService;
+import com.game.core.limit.RateLimiterService;
 import com.game.core.security.SecurityFilter;
 import com.game.data.redis.RedisService;
 import com.game.proto.ChatMessage;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -83,9 +84,9 @@ public class ChatBusinessService {
      * 发送聊天消息
      */
     public SendChatResult sendChat(long roleId, int channel, String content, long targetId) {
-        // 1. 频率限制
+        // 1. 频率限制（1分钟内最多10条消息）
         String rateLimitKey = "chat:" + roleId;
-        if (!rateLimiterService.tryAcquire(rateLimitKey, 10, Duration.ofSeconds(60))) {
+        if (!rateLimiterService.tryAcquireDistributed(rateLimitKey, 10, Duration.ofSeconds(60))) {
             return SendChatResult.fail("发送太频繁，请稍后再试");
         }
 
@@ -150,11 +151,11 @@ public class ChatBusinessService {
         pushService.broadcast(PUSH_CHAT, push);
 
         // 同时通过 Redis 发布，支持跨服务器
-        redisService.publish("chat:world", message.toByteArray());
+        redisService.publish("chat:world", Base64.getEncoder().encodeToString(message.toByteArray()));
 
         // 缓存最近消息
         String cacheKey = CHAT_HISTORY_KEY + "world";
-        redisService.leftPush(cacheKey, message.toByteArray());
+        redisService.leftPush(cacheKey, Base64.getEncoder().encodeToString(message.toByteArray()));
         redisService.trim(cacheKey, 0, 99); // 只保留最近 100 条
         redisService.expire(cacheKey, Duration.ofHours(24));
     }
@@ -174,11 +175,11 @@ public class ChatBusinessService {
         // 获取公会成员列表并推送
         // TODO: 从公会服务获取成员列表
         // 这里简化处理，通过 Redis 发布
-        redisService.publish("chat:guild:" + guildId, message.toByteArray());
+        redisService.publish("chat:guild:" + guildId, Base64.getEncoder().encodeToString(message.toByteArray()));
 
         // 缓存公会消息
         String cacheKey = CHAT_HISTORY_KEY + "guild:" + guildId;
-        redisService.leftPush(cacheKey, message.toByteArray());
+        redisService.leftPush(cacheKey, Base64.getEncoder().encodeToString(message.toByteArray()));
         redisService.trim(cacheKey, 0, 99);
         redisService.expire(cacheKey, Duration.ofHours(24));
     }
@@ -199,7 +200,7 @@ public class ChatBusinessService {
         long minId = Math.min(senderId, targetId);
         long maxId = Math.max(senderId, targetId);
         String cacheKey = CHAT_HISTORY_KEY + "private:" + minId + ":" + maxId;
-        redisService.leftPush(cacheKey, message.toByteArray());
+        redisService.leftPush(cacheKey, Base64.getEncoder().encodeToString(message.toByteArray()));
         redisService.trim(cacheKey, 0, 49); // 私聊保留 50 条
         redisService.expire(cacheKey, Duration.ofDays(7));
     }
@@ -253,14 +254,15 @@ public class ChatBusinessService {
         }
 
         // 从 Redis 获取缓存的消息
-        List<byte[]> cachedMessages = redisService.range(cacheKey, 0, count - 1);
+        List<String> cachedMessages = redisService.range(cacheKey, 0, count - 1);
         if (cachedMessages == null || cachedMessages.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<ChatMessage> messages = new ArrayList<>();
-        for (byte[] data : cachedMessages) {
+        for (String encodedData : cachedMessages) {
             try {
+                byte[] data = Base64.getDecoder().decode(encodedData);
                 ChatMessage msg = ChatMessage.parseFrom(data);
                 // 过滤掉 lastMsgId 之前的消息
                 if (lastMsgId <= 0 || msg.getMsgId() < lastMsgId) {

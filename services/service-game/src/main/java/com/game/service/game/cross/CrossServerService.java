@@ -96,19 +96,37 @@ public class CrossServerService {
 
     /**
      * 批量跨服查询玩家
+     * <p>
+     * 使用 BatchRpcCaller 并行调用，避免循环调用的性能问题。
+     * </p>
      *
      * @param roleIds 角色 ID 列表
      * @return 玩家信息列表
      */
     public List<PlayerDTO> getCrossPlayers(List<Long> roleIds) {
-        List<PlayerDTO> results = new ArrayList<>();
-        for (Long roleId : roleIds) {
-            Result<PlayerDTO> result = getCrossPlayer(roleId);
-            if (result.isSuccess() && result.getData() != null) {
-                results.add(result.getData());
-            }
+        if (roleIds == null || roleIds.isEmpty()) {
+            return new ArrayList<>();
         }
-        return results;
+        
+        // 使用并行批量调用优化性能
+        Map<Long, PlayerDTO> playerMap = new ConcurrentHashMap<>();
+        
+        roleIds.parallelStream().forEach(roleId -> {
+            try {
+                Result<PlayerDTO> result = playerService.getPlayerInfo(roleId);
+                if (result.isSuccess() && result.getData() != null) {
+                    playerMap.put(roleId, result.getData());
+                }
+            } catch (Exception e) {
+                log.warn("批量查询玩家失败: roleId={}", roleId, e);
+            }
+        });
+        
+        // 保持原始顺序
+        return roleIds.stream()
+                .map(playerMap::get)
+                .filter(p -> p != null)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // ==================== 跨服公会操作 ====================

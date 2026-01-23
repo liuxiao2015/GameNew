@@ -70,6 +70,25 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Sentinel 服务熔断 -->
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-apache-dubbo3-adapter</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Common API (for Mock classes) -->
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>common-api</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

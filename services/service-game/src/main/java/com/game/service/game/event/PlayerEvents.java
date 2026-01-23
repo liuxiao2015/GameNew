@@ -1,6 +1,6 @@
 package com.game.service.game.event;
 
-import com.game.core.event.GameEvent;
+import com.game.core.event.BaseGameEvent;
 import lombok.Getter;
 
 /**
@@ -21,7 +21,7 @@ public final class PlayerEvents {
      * 玩家登录事件
      */
     @Getter
-    public static class PlayerLoginEvent extends GameEvent {
+    public static class PlayerLoginEvent extends BaseGameEvent {
         private final long roleId;
         private final String roleName;
         private final int level;
@@ -41,7 +41,7 @@ public final class PlayerEvents {
      * 玩家登出事件
      */
     @Getter
-    public static class PlayerLogoutEvent extends GameEvent {
+    public static class PlayerLogoutEvent extends BaseGameEvent {
         private final long roleId;
         private final String roleName;
         private final long onlineTime;
@@ -59,7 +59,7 @@ public final class PlayerEvents {
      * 玩家升级事件
      */
     @Getter
-    public static class PlayerLevelUpEvent extends GameEvent {
+    public static class PlayerLevelUpEvent extends BaseGameEvent {
         private final long roleId;
         private final int oldLevel;
         private final int newLevel;
@@ -75,7 +75,7 @@ public final class PlayerEvents {
      * VIP 升级事件
      */
     @Getter
-    public static class VipLevelUpEvent extends GameEvent {
+    public static class VipLevelUpEvent extends BaseGameEvent {
         private final long roleId;
         private final int oldVipLevel;
         private final int newVipLevel;
@@ -93,7 +93,7 @@ public final class PlayerEvents {
      * 金币变化事件
      */
     @Getter
-    public static class GoldChangeEvent extends GameEvent {
+    public static class GoldChangeEvent extends BaseGameEvent {
         private final long roleId;
         private final long oldValue;
         private final long newValue;
@@ -111,7 +111,7 @@ public final class PlayerEvents {
      * 钻石变化事件
      */
     @Getter
-    public static class DiamondChangeEvent extends GameEvent {
+    public static class DiamondChangeEvent extends BaseGameEvent {
         private final long roleId;
         private final long oldValue;
         private final long newValue;
@@ -131,7 +131,7 @@ public final class PlayerEvents {
      * 战力变化事件
      */
     @Getter
-    public static class CombatPowerChangeEvent extends GameEvent {
+    public static class CombatPowerChangeEvent extends BaseGameEvent {
         private final long roleId;
         private final long oldPower;
         private final long newPower;
@@ -151,7 +151,7 @@ public final class PlayerEvents {
      * 玩家加入公会事件
      */
     @Getter
-    public static class PlayerJoinGuildEvent extends GameEvent {
+    public static class PlayerJoinGuildEvent extends BaseGameEvent {
         private final long roleId;
         private final long guildId;
         private final String guildName;
@@ -167,7 +167,7 @@ public final class PlayerEvents {
      * 玩家离开公会事件
      */
     @Getter
-    public static class PlayerLeaveGuildEvent extends GameEvent {
+    public static class PlayerLeaveGuildEvent extends BaseGameEvent {
         private final long roleId;
         private final long guildId;
         private final String guildName;
@@ -193,7 +193,7 @@ public final class PlayerEvents {
      * 物品获得事件
      */
     @Getter
-    public static class ItemObtainEvent extends GameEvent {
+    public static class ItemObtainEvent extends BaseGameEvent {
         private final long roleId;
         private final int itemId;
         private final long count;
@@ -211,7 +211,7 @@ public final class PlayerEvents {
      * 物品消耗事件
      */
     @Getter
-    public static class ItemConsumeEvent extends GameEvent {
+    public static class ItemConsumeEvent extends BaseGameEvent {
         private final long roleId;
         private final int itemId;
         private final long count;

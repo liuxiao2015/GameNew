@@ -37,8 +37,8 @@ public class BroadcastServiceAdapter implements BroadcastService {
     public void onConfigReload(String configName, long version) {
         log.info("收到配置刷新广播: configName={}, version={}", configName, version);
         try {
-            configLoader.reload(configName);
-            eventBus.publish(new ConfigReloadEvent(configName, version));
+            configLoader.reload(configName, "broadcast");
+            eventBus.publish(new com.game.core.event.events.ConfigReloadEvent(configName, "broadcast"));
         } catch (Exception e) {
             log.error("配置刷新失败: configName={}", configName, e);
         }

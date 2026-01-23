@@ -1,1 +1,1 @@
-traceFilter=com.game.core.trace.DubboTraceFilter
+traceFilter=com.game.core.rpc.filter.TraceFilter

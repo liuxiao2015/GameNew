@@ -1,17 +1,31 @@
 package com.game.core.event;
 
-import lombok.Getter;
-
 /**
- * 游戏事件基类
+ * 游戏事件接口
  * <p>
- * 所有游戏内事件都继承此类
+ * 所有游戏内事件都实现此接口。支持两种实现方式：
+ * <ul>
+ *     <li>record 实现（简单不可变事件）</li>
+ *     <li>class 实现（需要可取消等高级功能）</li>
+ * </ul>
  * </p>
  *
  * <pre>
- * 示例：
+ * 示例 1 - Record 实现：
  * {@code
- * public class PlayerLevelUpEvent extends GameEvent {
+ * public record PlayerLevelUpEvent(long roleId, int oldLevel, int newLevel) implements GameEvent {
+ *     @Override
+ *     public String getEventType() {
+ *         return "PlayerLevelUp";
+ *     }
+ * }
+ * }
+ * </pre>
+ *
+ * <pre>
+ * 示例 2 - Class 实现：
+ * {@code
+ * public class PlayerLevelUpEvent extends BaseGameEvent {
  *     private final int oldLevel;
  *     private final int newLevel;
  *
@@ -26,44 +40,31 @@ import lombok.Getter;
  *
  * @author GameServer
  */
-@Getter
-public abstract class GameEvent {
-
-    /**
-     * 事件发生时间
-     */
-    private final long timestamp;
-
-    /**
-     * 关联的角色ID (0 表示系统事件)
-     */
-    private final long roleId;
-
-    /**
-     * 是否已取消
-     */
-    private boolean cancelled;
-
-    protected GameEvent() {
-        this(0);
-    }
-
-    protected GameEvent(long roleId) {
-        this.roleId = roleId;
-        this.timestamp = System.currentTimeMillis();
-    }
-
-    /**
-     * 取消事件 (阻止后续处理)
-     */
-    public void cancel() {
-        this.cancelled = true;
-    }
+public interface GameEvent {
 
     /**
      * 获取事件类型名
      */
-    public String getEventType() {
-        return this.getClass().getSimpleName();
+    String getEventType();
+
+    /**
+     * 获取事件时间戳
+     */
+    default long getTimestamp() {
+        return System.currentTimeMillis();
+    }
+
+    /**
+     * 获取关联的角色ID
+     */
+    default long getRoleId() {
+        return 0L;
+    }
+
+    /**
+     * 是否已取消
+     */
+    default boolean isCancelled() {
+        return false;
     }
 }

@@ -716,3 +716,136 @@ public void init() {
     // 延迟初始化
 }
 ```
+
+---
+
+## 高级功能
+
+### 1. 链路追踪
+
+框架内置了 `TraceFilter`，自动在 RPC 调用链路中传递 TraceId：
+
+```java
+// TraceId 自动透传，无需手动处理
+// 日志中会自动输出 traceId
+
+// 手动设置 TraceId（用于 HTTP 入口）
+TraceFilter.setTraceId("custom-trace-id");
+
+// 获取当前 TraceId
+String traceId = TraceFilter.getTraceId();
+
+// 清理（请求结束时）
+TraceFilter.clearTraceId();
+```
+
+**日志配置**（logback-spring.xml）：
+
+```xml
+<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId}] %-5level %logger{36} - %msg%n</pattern>
+```
+
+### 2. 服务熔断降级
+
+基于 Sentinel 的熔断降级保护：
+
+```yaml
+# application.yml
+sentinel:
+  enabled: true
+  flow:
+    default-qps: 1000
+  degrade:
+    slow-ratio-threshold: 0.5
+    slow-rt-ms: 500
+    exception-ratio: 0.5
+```
+
+**使用降级 Mock：**
+
+```java
+@DubboReference(
+    mock = "com.game.core.rpc.mock.PlayerServiceMock",
+    timeout = 3000
+)
+private PlayerService playerService;
+```
+
+**内置降级类：**
+- `PlayerServiceMock` - 玩家服务降级
+- `GuildServiceMock` - 公会服务降级
+
+### 3. 灰度发布
+
+使用 TagRouter 实现灰度发布：
+
+```java
+// Provider 端配置标签
+// application.yml
+dubbo:
+  provider:
+    tag: gray
+
+// Consumer 端路由到灰度实例
+TagRouter.setTag("gray");
+try {
+    guildService.getGuildInfo(guildId);
+} finally {
+    TagRouter.clearTag();
+}
+
+// 强制模式（必须匹配标签）
+TagRouter.setTag("gray", true);
+```
+
+### 4. 批量调用优化
+
+避免循环调用导致的性能问题：
+
+```java
+@Autowired
+private BatchRpcCaller batchCaller;
+
+// 批量查询玩家信息
+List<Long> roleIds = Arrays.asList(1L, 2L, 3L, 4L, 5L);
+Map<Long, PlayerDTO> players = batchCaller.batchCall(
+    roleIds,
+    playerService::getPlayerInfo,
+    PlayerDTO::getRoleId
+);
+
+// 分片批量调用（大量数据）
+Map<Long, PlayerDTO> players = batchCaller.batchCallPartitioned(
+    roleIds, 
+    100,  // 每批100个
+    playerService::getPlayerInfo,
+    PlayerDTO::getRoleId
+);
+
+// 带重试的批量调用
+Map<Long, PlayerDTO> players = batchCaller.batchCallWithRetry(
+    roleIds,
+    playerService::getPlayerInfo,
+    PlayerDTO::getRoleId,
+    3  // 最多重试3次
+);
+```
+
+---
+
+## 服务治理能力总结
+
+| 能力 | 组件 | 说明 |
+|------|------|------|
+| **链路追踪** | `TraceFilter` | 自动透传 TraceId |
+| **服务熔断** | `SentinelConfig` | 流控+熔断+降级 |
+| **服务降级** | `*ServiceMock` | 失败时返回默认值 |
+| **灰度发布** | `TagRouter` | 按标签路由 |
+| **批量调用** | `BatchRpcCaller` | 并行+分片+重试 |
+| **推送优化** | `DubboPushService` | 替代 Redis Pub/Sub |
+| **事件总线** | `DubboEventBus` | 分布式事件广播 |
+
+---
+
+**文档版本**: v2.0  
+**最后更新**: 2026-01

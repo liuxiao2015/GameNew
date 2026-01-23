@@ -115,6 +115,25 @@ public class DistributedEventBus implements MessageListener {
     }
 
     /**
+     * 发布全局事件（通过事件类型和数据字符串）
+     * 
+     * @param eventType 事件类型
+     * @param eventData 事件数据 (JSON)
+     */
+    public void publishGlobal(String eventType, String eventData) {
+        DistributedEventMessage message = new DistributedEventMessage();
+        message.setEventClassName(eventType);
+        message.setEventData(eventData);
+        message.setSourceService(applicationName);
+        message.setTimestamp(System.currentTimeMillis());
+
+        String json = JsonUtil.toJson(message);
+        redisService.publish(BROADCAST_CHANNEL, json);
+
+        log.debug("广播全局事件: type={}", eventType);
+    }
+
+    /**
      * 发布事件到特定服务
      */
     public void publish(String targetService, GameEvent event) {

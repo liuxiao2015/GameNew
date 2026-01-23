@@ -220,14 +220,11 @@ public class RankBusinessService {
      * 获取排行榜 Key
      */
     private String getRankKey(int rankType) {
-        return switch (rankType) {
-            case RankType.COMBAT_POWER -> RankService.RANK_COMBAT_POWER;
-            case RankType.LEVEL -> RankService.RANK_LEVEL;
-            case RankType.RECHARGE -> RankService.RANK_RECHARGE;
-            case RankType.ARENA -> RankService.RANK_ARENA;
-            case RankType.GUILD -> RankService.RANK_GUILD;
-            default -> "rank:" + rankType;
-        };
+        RankType type = RankType.of(rankType);
+        if (type != null) {
+            return type.getRedisKey();
+        }
+        return "rank:" + rankType;
     }
 
     /**

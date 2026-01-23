@@ -89,8 +89,9 @@ public class ServiceManager {
 
         // 按启动顺序逆序停止
         Map<Integer, List<ServiceProcess>> orderedProcesses = processes.values().stream()
-                .collect(Collectors.groupingBy(p -> p.getConfig().getOrder(), 
-                        () -> new TreeMap<>(Comparator.reverseOrder()), 
+                .collect(Collectors.groupingBy(
+                        (ServiceProcess p) -> p.getConfig().getOrder(), 
+                        () -> new TreeMap<Integer, List<ServiceProcess>>(Comparator.reverseOrder()), 
                         Collectors.toList()));
 
         CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
