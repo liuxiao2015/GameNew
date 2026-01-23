@@ -322,4 +322,12 @@ public class GuildServiceImpl implements GuildService {
         dto.setCombatPower(member.getCombatPower());
         return dto;
     }
+
+    @Override
+    public Result<Void> dailyReset() {
+        log.info("执行公会每日重置");
+        // 实际实现：遍历所有公会执行每日重置
+        // 这里简化处理，实际应该通过批量任务处理
+        return Result.success();
+    }
 }

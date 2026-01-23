@@ -1,105 +1,85 @@
 package com.game.service.rank.constants;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
- * 排行榜类型
+ * 排行榜类型常量
  *
  * @author GameServer
  */
-@Getter
-@RequiredArgsConstructor
-public enum RankType {
+public final class RankType {
+
+    private RankType() {}
 
     /**
      * 战力榜
      */
-    POWER(1, "combat-power", "rank:power", "战力榜"),
+    public static final int COMBAT_POWER = 1;
 
     /**
      * 等级榜
      */
-    LEVEL(2, "level", "rank:level", "等级榜"),
+    public static final int LEVEL = 2;
 
     /**
      * 充值榜
      */
-    RECHARGE(3, "recharge", "rank:recharge", "充值榜"),
+    public static final int RECHARGE = 3;
 
     /**
      * 消费榜
      */
-    CONSUME(4, "consume", "rank:consume", "消费榜"),
+    public static final int CONSUME = 4;
 
     /**
      * 副本榜
      */
-    DUNGEON(5, "dungeon", "rank:dungeon", "副本榜"),
+    public static final int DUNGEON = 5;
 
     /**
      * 竞技场榜
      */
-    ARENA(6, "arena", "rank:arena", "竞技场榜"),
+    public static final int ARENA = 6;
 
     /**
      * 公会榜
      */
-    GUILD(7, "guild", "rank:guild", "公会榜"),
-
-    ;
+    public static final int GUILD = 7;
 
     /**
-     * 类型 ID
+     * 根据类型 ID 获取名称
      */
-    private final int type;
-
-    /**
-     * 类型名称 (字符串标识)
-     */
-    private final String name;
-
-    /**
-     * Redis Key
-     */
-    private final String redisKey;
-
-    /**
-     * 描述
-     */
-    private final String desc;
-
-    /**
-     * 根据类型 ID 获取枚举
-     */
-    public static RankType of(int type) {
-        for (RankType rankType : values()) {
-            if (rankType.type == type) {
-                return rankType;
-            }
-        }
-        return null;
+    public static String getName(int type) {
+        return switch (type) {
+            case COMBAT_POWER -> "combat_power";
+            case LEVEL -> "level";
+            case RECHARGE -> "recharge";
+            case CONSUME -> "consume";
+            case DUNGEON -> "dungeon";
+            case ARENA -> "arena";
+            case GUILD -> "guild";
+            default -> "unknown";
+        };
     }
 
     /**
-     * 根据类型名称获取枚举
+     * 根据类型 ID 获取 Redis Key
      */
-    public static RankType of(String name) {
-        if (name == null || name.isEmpty()) {
-            return null;
-        }
-        for (RankType rankType : values()) {
-            if (rankType.name.equalsIgnoreCase(name)) {
-                return rankType;
-            }
-        }
-        return null;
+    public static String getRedisKey(int type) {
+        return "rank:" + getName(type);
     }
 
     /**
-     * 获取玩家信息缓存 Key
+     * 根据类型 ID 获取描述
      */
-    public String getInfoKey() {
-        return redisKey + ":info";
+    public static String getDesc(int type) {
+        return switch (type) {
+            case COMBAT_POWER -> "战力榜";
+            case LEVEL -> "等级榜";
+            case RECHARGE -> "充值榜";
+            case CONSUME -> "消费榜";
+            case DUNGEON -> "副本榜";
+            case ARENA -> "竞技场榜";
+            case GUILD -> "公会榜";
+            default -> "未知榜";
+        };
     }
 }

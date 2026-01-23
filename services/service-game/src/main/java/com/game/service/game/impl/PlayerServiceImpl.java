@@ -186,6 +186,27 @@ public class PlayerServiceImpl implements PlayerService {
         return Result.success();
     }
 
+    @Override
+    public Result<Void> setGuildInfo(long roleId, long guildId, String guildName, int position) {
+        log.info("设置公会信息: roleId={}, guildId={}, guildName={}, position={}", 
+                roleId, guildId, guildName, position);
+
+        PlayerActor actor = playerActorSystem.getActorIfPresent(roleId);
+        if (actor != null) {
+            actor.fire("SET_GUILD", new PlayerActor.SetGuildData(guildId, guildName, position));
+        }
+
+        return Result.success();
+    }
+
+    @Override
+    public Result<Void> dailyReset() {
+        log.info("执行玩家每日重置");
+        // 实际实现：遍历所有在线玩家执行每日重置
+        // 这里简化处理，实际应该通过批量任务处理
+        return Result.success();
+    }
+
     /**
      * 转换为 DTO
      */

@@ -91,6 +91,11 @@ public final class ProtocolConstants {
      */
     public static final int PROTOCOL_BATTLE = 0x0800;
 
+    /**
+     * 推送协议 (0xF000 - 0xFFFF)
+     */
+    public static final int PROTOCOL_PUSH = 0xF0;
+
     // ==================== 系统消息 ID ====================
 
     /**

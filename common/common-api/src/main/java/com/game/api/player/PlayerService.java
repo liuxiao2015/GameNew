@@ -96,4 +96,25 @@ public interface PlayerService {
      * @return 操作结果
      */
     Result<Void> unbanPlayer(long roleId);
+
+    /**
+     * 设置公会信息
+     *
+     * @param roleId    角色 ID
+     * @param guildId   公会 ID
+     * @param guildName 公会名称
+     * @param position  职位
+     * @return 操作结果
+     */
+    Result<Void> setGuildInfo(long roleId, long guildId, String guildName, int position);
+
+    /**
+     * 每日重置
+     * <p>
+     * 由调度服务调用，重置所有玩家的每日数据
+     * </p>
+     *
+     * @return 操作结果
+     */
+    Result<Void> dailyReset();
 }

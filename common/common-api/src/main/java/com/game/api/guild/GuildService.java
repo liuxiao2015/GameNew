@@ -141,4 +141,14 @@ public interface GuildService {
      * @return 成员列表
      */
     Result<List<GuildMemberDTO>> getMembers(long guildId);
+
+    /**
+     * 每日重置
+     * <p>
+     * 由调度服务调用，重置所有公会的每日数据
+     * </p>
+     *
+     * @return 操作结果
+     */
+    Result<Void> dailyReset();
 }

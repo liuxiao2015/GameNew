@@ -22,6 +22,10 @@
         <!-- Framework -->
         <dependency>
             <groupId>com.game</groupId>
+            <artifactId>framework-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
             <artifactId>framework-data</artifactId>
         </dependency>
         <dependency>

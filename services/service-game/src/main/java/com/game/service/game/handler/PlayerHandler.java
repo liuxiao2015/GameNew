@@ -61,7 +61,7 @@ public class PlayerHandler extends BaseHandler {
         }
 
         // 通过 Actor 消息更新
-        actor.fire("UPDATE_INFO", new UpdateInfoData(
+        actor.fire("UPDATE_INFO", new PlayerActor.UpdateInfoData(
                 request.getAvatarId(),
                 request.getFrameId(),
                 request.getSignature()
@@ -197,7 +197,4 @@ public class PlayerHandler extends BaseHandler {
         throw new com.game.common.exception.BizException(errorCode);
     }
 
-    // ==================== 消息数据类 ====================
-
-    public record UpdateInfoData(int avatarId, int frameId, String signature) {}
 }

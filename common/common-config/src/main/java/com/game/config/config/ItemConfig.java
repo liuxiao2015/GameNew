@@ -110,4 +110,12 @@ public class ItemConfig implements GameConfig {
     public boolean isConsumable() {
         return type == 1;
     }
+
+    /**
+     * 是否可使用
+     */
+    public boolean isUsable() {
+        // 消耗品和礼包可使用
+        return type == 1 || type == 5;
+    }
 }
