@@ -1,7 +1,7 @@
 package com.game.service.game.impl;
 
 import com.game.api.player.PlayerDTO;
-import com.game.entity.player.PlayerData;
+import com.game.entity.document.PlayerData;
 import com.game.service.game.actor.PlayerActor;
 import com.game.service.game.actor.PlayerActorSystem;
 import com.game.api.player.PlayerService;

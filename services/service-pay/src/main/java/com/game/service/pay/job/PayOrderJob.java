@@ -1,8 +1,8 @@
 package com.game.service.pay.job;
 
-import com.game.service.pay.entity.PayOrder;
-import com.game.service.pay.enums.OrderStatus;
-import com.game.service.pay.repository.PayOrderRepository;
+import com.game.entity.document.OrderStatus;
+import com.game.entity.document.PayOrder;
+import com.game.entity.repository.PayOrderRepository;
 import com.game.service.pay.service.DeliverService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

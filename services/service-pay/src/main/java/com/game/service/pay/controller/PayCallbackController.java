@@ -1,6 +1,6 @@
 package com.game.service.pay.controller;
 
-import com.game.service.pay.enums.PayChannel;
+import com.game.entity.document.PayChannel;
 import com.game.service.pay.service.PayCallbackService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

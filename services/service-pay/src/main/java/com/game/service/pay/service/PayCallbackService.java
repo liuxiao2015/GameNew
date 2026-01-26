@@ -1,14 +1,10 @@
 package com.game.service.pay.service;
 
 import com.game.api.pay.PayCallbackResult;
+import com.game.entity.document.*;
+import com.game.entity.repository.*;
 import com.game.service.pay.channel.PayChannelAdapter;
 import com.game.service.pay.channel.PayChannelFactory;
-import com.game.service.pay.entity.PayOrder;
-import com.game.service.pay.entity.PayRecord;
-import com.game.service.pay.enums.OrderStatus;
-import com.game.service.pay.enums.PayChannel;
-import com.game.service.pay.repository.PayOrderRepository;
-import com.game.service.pay.repository.PayRecordRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

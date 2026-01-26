@@ -41,6 +41,7 @@
         <module>services/service-robot</module>
         <module>services/service-launcher</module>
         <module>services/service-pay</module>
+        <module>services/service-activity</module>
     </modules>
 
     <!-- 属性配置 -->
@@ -400,9 +401,6 @@
                         <release>${java.version}</release>
                         <encoding>UTF-8</encoding>
                         <parameters>true</parameters>
-                        <compilerArgs>
-                            <arg>--enable-preview</arg>
-                        </compilerArgs>
                         <!-- Lombok 注解处理器 -->
                         <annotationProcessorPaths>
                             <path>
@@ -419,9 +417,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
-                    <configuration>
-                        <argLine>--enable-preview</argLine>
-                    </configuration>
                 </plugin>
 
                 <!-- Spring Boot 插件 -->

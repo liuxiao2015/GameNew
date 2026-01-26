@@ -2,8 +2,8 @@ package com.game.service.pay.channel;
 
 import com.game.api.pay.OrderDTO;
 import com.game.api.pay.PayCallbackResult;
-import com.game.service.pay.entity.PayOrder;
-import com.game.service.pay.enums.PayChannel;
+import com.game.entity.document.PayChannel;
+import com.game.entity.document.PayOrder;
 
 import java.util.Map;
 

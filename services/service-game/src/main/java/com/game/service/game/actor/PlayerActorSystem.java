@@ -3,7 +3,7 @@ package com.game.service.game.actor;
 import com.game.actor.core.ActorSystem;
 import com.game.config.container.LevelConfigContainer;
 import com.game.core.event.EventBus;
-import com.game.service.game.repository.PlayerRepository;
+import com.game.entity.repository.PlayerRepository;
 import org.springframework.stereotype.Component;
 
 /**

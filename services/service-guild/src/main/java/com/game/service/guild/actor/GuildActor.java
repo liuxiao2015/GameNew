@@ -6,7 +6,7 @@ import com.game.common.constants.GameConstants;
 import com.game.common.result.Result;
 import com.game.data.mongo.MongoService;
 import com.game.data.redis.RedisService;
-import com.game.entity.guild.GuildData;
+import com.game.entity.document.GuildData;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;

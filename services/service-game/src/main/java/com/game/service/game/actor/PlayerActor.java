@@ -5,9 +5,9 @@ import com.game.actor.core.MessageHandler;
 import com.game.config.container.LevelConfigContainer;
 import com.game.config.config.LevelConfig;
 import com.game.core.event.EventBus;
-import com.game.entity.player.PlayerData;
+import com.game.entity.document.PlayerData;
 import com.game.service.game.event.PlayerEvents;
-import com.game.service.game.repository.PlayerRepository;
+import com.game.entity.repository.PlayerRepository;
 import com.game.service.game.service.BagService;
 import lombok.Getter;
 import lombok.Setter;
@@ -69,7 +69,7 @@ public class PlayerActor extends BaseActor<PlayerData> {
 
     @Override
     protected PlayerData loadData() {
-        return playerRepository.findById(getActorId()).orElse(null);
+        return playerRepository.findByRoleId(getActorId()).orElse(null);
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.game.core.handler.BaseHandler;
 import com.game.core.handler.annotation.Protocol;
 import com.game.core.handler.annotation.ProtocolController;
 import com.game.core.net.session.Session;
-import com.game.entity.player.PlayerData;
+import com.game.entity.document.PlayerData;
 import com.game.proto.*;
 import com.game.service.game.actor.PlayerActor;
 import com.game.service.game.actor.PlayerActorSystem;

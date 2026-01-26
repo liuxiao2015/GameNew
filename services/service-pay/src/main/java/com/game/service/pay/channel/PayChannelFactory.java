@@ -1,6 +1,6 @@
 package com.game.service.pay.channel;
 
-import com.game.service.pay.enums.PayChannel;
+import com.game.entity.document.PayChannel;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

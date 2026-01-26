@@ -2,12 +2,8 @@ package com.game.service.pay.service;
 
 import com.game.api.player.PlayerService;
 import com.game.common.result.Result;
-import com.game.service.pay.entity.PayOrder;
-import com.game.service.pay.entity.Product;
-import com.game.service.pay.enums.OrderStatus;
-import com.game.service.pay.repository.PayOrderRepository;
-import com.game.service.pay.repository.PayRecordRepository;
-import com.game.service.pay.repository.ProductRepository;
+import com.game.entity.document.*;
+import com.game.entity.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;

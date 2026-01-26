@@ -12,7 +12,7 @@ import com.game.core.lock.LockService;
 import com.game.core.push.PushService;
 import com.game.core.rank.RankService;
 import com.game.data.mongo.MongoService;
-import com.game.entity.guild.GuildData;
+import com.game.entity.document.GuildData;
 import com.game.proto.*;
 import com.game.service.guild.actor.GuildActor;
 import com.game.service.guild.event.GuildEvents;

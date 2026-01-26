@@ -3,7 +3,7 @@ package com.game.service.guild.impl;
 import com.game.actor.core.ActorMessage;
 import com.game.actor.core.ActorSystem;
 import com.game.api.guild.GuildDTO;
-import com.game.entity.guild.GuildData;
+import com.game.entity.document.GuildData;
 import com.game.service.guild.actor.GuildActor;
 import com.game.service.guild.actor.GuildActor.MessageTypes;
 import com.game.api.guild.GuildMemberDTO;

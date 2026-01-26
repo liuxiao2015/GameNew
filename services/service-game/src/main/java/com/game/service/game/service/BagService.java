@@ -5,7 +5,7 @@ import com.game.config.container.ItemConfigContainer;
 import com.game.config.config.ItemConfig;
 import com.game.core.event.EventBus;
 import com.game.core.push.PushService;
-import com.game.entity.player.PlayerData;
+import com.game.entity.document.PlayerData;
 import com.game.proto.ItemInstance;
 import com.game.proto.S2C_ItemChange;
 import com.game.service.game.actor.PlayerActor;
