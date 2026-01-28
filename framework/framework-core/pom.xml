@@ -89,6 +89,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Framework MQ (for MqDistributedEventBus) -->
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>framework-mq</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

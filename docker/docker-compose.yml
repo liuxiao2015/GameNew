@@ -88,6 +88,28 @@ services:
     networks:
       - game-network
 
+  # ==================== RabbitMQ ====================
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: game-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP 协议端口
+      - "15672:15672"  # 管理界面端口
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /game
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - game-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 # ==================== 网络 ====================
 networks:
   game-network:
@@ -102,4 +124,6 @@ volumes:
   nacos_data:
     driver: local
   xxljob_data:
+    driver: local
+  rabbitmq_data:
     driver: local

@@ -30,6 +30,10 @@
         </dependency>
         <dependency>
             <groupId>com.game</groupId>
+            <artifactId>framework-mq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
             <artifactId>framework-log</artifactId>
         </dependency>
         <dependency>

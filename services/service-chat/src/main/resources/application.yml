@@ -49,6 +49,16 @@ spring:
       timeout: 3s
       connect-timeout: 3s
 
+  # RabbitMQ 配置
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+    virtual-host: ${RABBITMQ_VHOST:/game}
+    publisher-confirms: true
+    publisher-returns: true
+
 # ==================== 聊天配置 ====================
 game:
   chat:

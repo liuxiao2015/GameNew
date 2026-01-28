@@ -21,6 +21,7 @@
         <module>framework/framework-actor</module>
         <module>framework/framework-data</module>
         <module>framework/framework-log</module>
+        <module>framework/framework-mq</module>
 
         <!-- 公共模块 (Common) - API、实体、配置定义 -->
         <module>common/common-api</module>
@@ -42,6 +43,7 @@
         <module>services/service-launcher</module>
         <module>services/service-pay</module>
         <module>services/service-activity</module>
+        <module>services/service-battle</module>
     </modules>
 
     <!-- 属性配置 -->
@@ -163,6 +165,16 @@
             <dependency>
                 <groupId>com.game</groupId>
                 <artifactId>framework-log</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.game</groupId>
+                <artifactId>framework-mq</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.game</groupId>
+                <artifactId>service-battle</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

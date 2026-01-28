@@ -1,14 +1,14 @@
-# ==================== 游戏服务配置 ====================
+# ==================== 战斗服务配置 ====================
 
 spring:
   application:
-    name: service-game
+    name: service-battle
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
 
 # ==================== 服务端口 ====================
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8090}
 
 # ==================== Dubbo 配置 ====================
 dubbo:
@@ -21,12 +21,11 @@ dubbo:
       namespace: ${NACOS_NAMESPACE:public}
   protocol:
     name: dubbo
-    port: ${DUBBO_PORT:20881}
+    port: ${DUBBO_PORT:20890}
     threads: 200
   provider:
-    timeout: 5000
+    timeout: 10000
     retries: 0
-    loadbalance: consistenthash
   consumer:
     timeout: 5000
     retries: 0
@@ -36,14 +35,12 @@ dubbo:
 spring:
   data:
     mongodb:
-      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DATABASE:game_server}?authSource=${MONGO_AUTH_DB:game_server}&maxPoolSize=3&maxIdleTimeMS=30000&retryWrites=false
+      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DATABASE:game_server}?authSource=${MONGO_AUTH_DB:game_server}&maxPoolSize=5&maxIdleTimeMS=30000&retryWrites=false
       database: ${MONGO_DATABASE:game_server}
       auto-index-creation: true
       uuid-representation: standard
-      # 注意：如需认证，请在 URI 中指定或使用环境变量
-      # uri: mongodb://username:password@localhost:27017/game_server
     
-    # Redis 配置（Redisson使用 - 单机模式）
+    # Redis 配置
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
@@ -52,7 +49,7 @@ spring:
       timeout: 3s
       connect-timeout: 3s
 
-  # RabbitMQ 配置
+# ==================== RabbitMQ 配置 ====================
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -62,19 +59,17 @@ spring:
     publisher-confirms: true
     publisher-returns: true
 
-# ==================== Actor 配置 ====================
+# ==================== 战斗配置 ====================
 game:
-  actor:
-    # 玩家 Actor 配置
-    player:
-      max-size: 10000
-      idle-timeout-minutes: 30
-      save-interval-seconds: 300
-    # 公会 Actor 配置
-    guild:
-      max-size: 1000
-      idle-timeout-minutes: 60
-      save-interval-seconds: 600
+  battle:
+    # 战斗超时时间 (秒)
+    timeout-seconds: 300
+    # 最大回合数
+    max-rounds: 30
+    # PVP 匹配超时 (秒)
+    match-timeout-seconds: 60
+    # 战斗记录保留天数
+    record-retention-days: 30
 
 # ==================== 日志配置 ====================
 logging:

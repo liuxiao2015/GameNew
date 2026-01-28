@@ -12,11 +12,11 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>service-game</artifactId>
+    <artifactId>service-battle</artifactId>
     <packaging>jar</packaging>
 
-    <name>Service Game</name>
-    <description>游戏服务 - 核心游戏逻辑 (PlayerActor)</description>
+    <name>Service Battle</name>
+    <description>战斗服务 - PVE/PVP 战斗逻辑</description>
 
     <dependencies>
         <!-- Framework -->
@@ -26,16 +26,14 @@
         </dependency>
         <dependency>
             <groupId>com.game</groupId>
-            <artifactId>framework-actor</artifactId>
+            <artifactId>framework-data</artifactId>
         </dependency>
         <dependency>
             <groupId>com.game</groupId>
             <artifactId>framework-mq</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.game</groupId>
-            <artifactId>framework-log</artifactId>
-        </dependency>
+
+        <!-- Common -->
         <dependency>
             <groupId>com.game</groupId>
             <artifactId>common-api</artifactId>
@@ -52,21 +50,7 @@
         <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- Spring Cloud Alibaba Nacos Config -->
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
         <!-- Dubbo -->
@@ -79,11 +63,11 @@
             <artifactId>dubbo-nacos-spring-boot-starter</artifactId>
         </dependency>
 
-        <!-- Test -->
+        <!-- Lombok -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -92,6 +76,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.game.service.battle.BattleServiceApplication</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>

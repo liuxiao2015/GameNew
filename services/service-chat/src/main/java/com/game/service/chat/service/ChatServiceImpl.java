@@ -8,6 +8,9 @@ import com.game.common.enums.ErrorCode;
 import com.game.common.result.Result;
 import com.game.common.util.IdGenerator;
 import com.game.data.redis.RedisService;
+import com.game.mq.MqExchange;
+import com.game.mq.message.ChatMqMessage;
+import com.game.mq.producer.MqProducer;
 import com.game.service.chat.entity.ChatMessage;
 import com.game.service.chat.entity.MuteInfo;
 import com.game.service.chat.repository.ChatMessageRepository;
@@ -59,6 +62,7 @@ public class ChatServiceImpl implements ChatService {
     private final MuteInfoRepository muteInfoRepository;
     private final RedisService redisService;
     private final IdGenerator idGenerator;
+    private final MqProducer mqProducer;
 
     @DubboReference(check = false)
     private PlayerService playerService;
@@ -227,10 +231,18 @@ public class ChatServiceImpl implements ChatService {
 
         chatMessageRepository.save(message);
 
-        // 广播系统公告
-        String noticeData = String.format("{\"type\":%d,\"title\":\"%s\",\"content\":\"%s\"}",
-            noticeType, title, content);
-        redisService.publish("chat:notice:system", noticeData);
+        // 通过 MQ 广播系统公告
+        ChatMqMessage mqMessage = new ChatMqMessage();
+        mqMessage.setMsgId(message.getMsgId());
+        mqMessage.setChannel(CHANNEL_SYSTEM);
+        mqMessage.setSenderId(0);
+        mqMessage.setSenderName("系统");
+        mqMessage.setContent(content);
+        mqMessage.setSendTime(message.getSendTime());
+        mqMessage.addProperty("noticeType", String.valueOf(noticeType));
+        mqMessage.addProperty("title", title);
+        
+        mqProducer.broadcast(MqExchange.CHAT_WORLD, mqMessage);
 
         log.info("系统公告发送: type={}, title={}", noticeType, title);
         return Result.success();
@@ -262,18 +274,39 @@ public class ChatServiceImpl implements ChatService {
     }
 
     /**
-     * 发布消息到 Redis Stream
+     * 发布消息到 RabbitMQ
+     * <p>
+     * 替代原有的 Redis Pub/Sub，使用 RabbitMQ 减少 Redis 压力
+     * </p>
      */
     private void publishMessage(ChatMessage message) {
-        String channel = switch (message.getChannel()) {
-            case CHANNEL_WORLD -> "chat:stream:world";
-            case CHANNEL_GUILD -> "chat:stream:guild:" + message.getGuildId();
-            case CHANNEL_PRIVATE -> "chat:stream:private:" + message.getTargetId();
-            default -> null;
-        };
+        ChatMqMessage mqMessage = new ChatMqMessage();
+        mqMessage.setMsgId(message.getMsgId());
+        mqMessage.setChannel(message.getChannel());
+        mqMessage.setSenderId(message.getSenderId());
+        mqMessage.setSenderName(message.getSenderName());
+        mqMessage.setSenderLevel(message.getSenderLevel());
+        mqMessage.setSenderAvatar(message.getSenderAvatar());
+        mqMessage.setSenderVip(message.getSenderVip());
+        mqMessage.setContent(message.getContent());
+        mqMessage.setTargetId(message.getTargetId());
+        mqMessage.setGuildId(message.getGuildId());
+        mqMessage.setSendTime(message.getSendTime());
 
-        if (channel != null) {
-            redisService.publish(channel, toDTO(message).toString());
+        switch (message.getChannel()) {
+            case CHANNEL_WORLD -> {
+                // 世界聊天广播 (fanout)
+                mqProducer.broadcast(MqExchange.CHAT_WORLD, mqMessage);
+            }
+            case CHANNEL_GUILD -> {
+                // 公会聊天定向 (direct)
+                mqProducer.send(MqExchange.CHAT_DIRECT, "guild." + message.getGuildId(), mqMessage);
+            }
+            case CHANNEL_PRIVATE -> {
+                // 私聊定向 (direct)
+                mqProducer.send(MqExchange.CHAT_DIRECT, "private." + message.getTargetId(), mqMessage);
+            }
+            default -> log.warn("未知的聊天频道: {}", message.getChannel());
         }
     }
 
