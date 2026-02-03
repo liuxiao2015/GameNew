@@ -28,10 +28,8 @@
         <module>common/common-entity</module>
         <module>common/common-config</module>
 
-        <!-- 网关 (Gateway) -->
-        <module>gateway/gateway-server</module>
-
-        <!-- 微服务 (Services) - 需要启动的业务服务 -->
+        <!-- 微服务 (Services) - 所有需要启动的业务服务 -->
+        <module>services/service-gateway</module>
         <module>services/service-game</module>
         <module>services/service-guild</module>
         <module>services/service-login</module>
@@ -40,10 +38,12 @@
         <module>services/service-scheduler</module>
         <module>services/service-gm</module>
         <module>services/service-robot</module>
-        <module>services/service-launcher</module>
         <module>services/service-pay</module>
         <module>services/service-activity</module>
         <module>services/service-battle</module>
+
+        <!-- 服务启动器 (独立于被管理的服务) -->
+        <module>launcher</module>
     </modules>
 
     <!-- 属性配置 -->
@@ -89,6 +89,9 @@
 
         <!-- 链路追踪 -->
         <micrometer-tracing.version>1.2.2</micrometer-tracing.version>
+
+        <!-- API 文档 -->
+        <springdoc.version>2.3.0</springdoc.version>
 
         <!-- 工具 -->
         <lombok.version>1.18.30</lombok.version>
@@ -249,6 +252,13 @@
                 <groupId>com.alibaba.csp</groupId>
                 <artifactId>sentinel-transport-simple-http</artifactId>
                 <version>${sentinel.version}</version>
+            </dependency>
+
+            <!-- ==================== API 文档 (SpringDoc OpenAPI) ==================== -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
             </dependency>
 
             <!-- ==================== MongoDB ==================== -->

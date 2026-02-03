@@ -5,10 +5,31 @@ spring:
     name: service-rank
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      database: ${REDIS_DB:1}
+      timeout: 3s
+      connect-timeout: 3s
 
 # ==================== 服务端口 ====================
 server:
   port: ${SERVER_PORT:8085}
+  # 优雅停机
+  shutdown: graceful
+
+# ==================== Actuator 配置 ====================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
 
 # ==================== Dubbo 配置 ====================
 dubbo:
@@ -30,17 +51,6 @@ dubbo:
     timeout: 5000
     retries: 0
     check: false
-
-# ==================== Redis 配置（Redisson使用 - 单机模式） ====================
-spring:
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:123456}
-      database: ${REDIS_DB:1}
-      timeout: 3s
-      connect-timeout: 3s
 
 # ==================== 排行配置 ====================
 game:

@@ -39,6 +39,10 @@ public class SecurityConfig {
                 .requestMatchers("/gm/auth/login").permitAll()
                 // 健康检查
                 .requestMatchers("/actuator/**").permitAll()
+                // Swagger UI 和 OpenAPI 文档
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+                .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                 // 其他请求需要认证 (由自定义切面处理)
                 .anyRequest().permitAll()
             );

@@ -1,5 +1,6 @@
 package com.game.service.gm.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
@@ -8,15 +9,12 @@ import lombok.Data;
  * @author GameServer
  */
 @Data
+@Schema(description = "登录请求参数")
 public class LoginRequest {
 
-    /**
-     * 用户名
-     */
+    @Schema(description = "用户名", example = "admin", requiredMode = Schema.RequiredMode.REQUIRED)
     private String username;
 
-    /**
-     * 密码
-     */
+    @Schema(description = "密码", example = "admin123", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 }

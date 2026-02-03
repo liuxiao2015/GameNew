@@ -1,0 +1,195 @@
+# ==================== 游戏服务器启动配置 ====================
+# 
+# 使用方法:
+#   1. 交互模式: java -jar launcher.jar
+#   2. 一键启动: java -jar launcher.jar up
+#   3. 本地模式: java -jar launcher.jar up --local  (Windows 推荐，自动启动 Nacos)
+#   4. 指定配置: java -jar launcher.jar -c launcher.yaml up
+#
+# Windows 本地开发 (无需 Docker):
+#   - 启动器会自动解压并启动 tools/nacos-server-2.3.0.zip
+#   - 需要手动安装 MongoDB 和 Redis
+#   - 使用 'up --local' 或 'nacos start' 启动本地 Nacos
+#
+# Docker 环境 (推荐):
+#   - 使用 'up' 一键启动 Docker 基础设施和所有服务
+#
+# 如果不提供配置文件，启动器会自动扫描 services/ 目录发现服务
+
+# ==================== 全局配置 ====================
+global:
+  # 项目根目录 (相对于启动器工作目录)
+  projectRoot: "."
+  
+  # Java 路径 (可选，默认使用 JAVA_HOME)
+  # javaHome: "C:/Program Files/Java/jdk-21"
+  
+  # 默认 JVM 参数
+  jvmArgs: "-Xms256m -Xmx512m -Dfile.encoding=UTF-8"
+  
+  # 启动超时时间 (秒)
+  startupTimeout: 60
+  
+  # 停止超时时间 (秒)
+  shutdownTimeout: 30
+  
+  # 日志目录
+  logDir: "logs"
+  
+  # PID 文件目录
+  pidDir: ".pids"
+  
+  # 全局环境变量
+  env:
+    SPRING_PROFILES_ACTIVE: "dev"
+    LOG_LEVEL: "DEBUG"
+
+# ==================== 服务组配置 ====================
+groups:
+  core:
+    name: "core"
+    description: "核心服务 (网关、登录、游戏)"
+    order: 1
+    services:
+      - service-gateway
+      - service-login
+      - service-game
+
+  social:
+    name: "social"
+    description: "社交服务 (公会、聊天)"
+    order: 2
+    services:
+      - service-guild
+      - service-chat
+
+  auxiliary:
+    name: "auxiliary"
+    description: "辅助服务 (排行榜、定时任务)"
+    order: 3
+    services:
+      - service-rank
+      - service-scheduler
+
+  operation:
+    name: "operation"
+    description: "运营服务 (活动、支付、战斗、GM)"
+    order: 4
+    services:
+      - service-activity
+      - service-pay
+      - service-battle
+      - service-gm
+
+# ==================== 服务配置 ====================
+# 如果不配置 services，启动器会自动发现
+services:
+  # 网关服务
+  - name: service-gateway
+    description: "网关服务"
+    module: services/service-gateway
+    jar: target/service-gateway-1.0.0-SNAPSHOT.jar
+    port: 8888
+    dubboPort: 20880
+    order: 10
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 登录服务
+  - name: service-login
+    description: "登录服务"
+    module: services/service-login
+    jar: target/service-login-1.0.0-SNAPSHOT.jar
+    port: 8080
+    dubboPort: 20881
+    order: 20
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 游戏服务
+  - name: service-game
+    description: "游戏服务"
+    module: services/service-game
+    jar: target/service-game-1.0.0-SNAPSHOT.jar
+    port: 8081
+    dubboPort: 20882
+    order: 30
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 公会服务
+  - name: service-guild
+    description: "公会服务"
+    module: services/service-guild
+    jar: target/service-guild-1.0.0-SNAPSHOT.jar
+    port: 8082
+    dubboPort: 20883
+    order: 40
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 聊天服务
+  - name: service-chat
+    description: "聊天服务"
+    module: services/service-chat
+    jar: target/service-chat-1.0.0-SNAPSHOT.jar
+    port: 8083
+    dubboPort: 20884
+    order: 50
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 排行榜服务
+  - name: service-rank
+    description: "排行榜服务"
+    module: services/service-rank
+    jar: target/service-rank-1.0.0-SNAPSHOT.jar
+    port: 8084
+    dubboPort: 20885
+    order: 60
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 定时任务服务
+  - name: service-scheduler
+    description: "定时任务服务"
+    module: services/service-scheduler
+    jar: target/service-scheduler-1.0.0-SNAPSHOT.jar
+    port: 8085
+    dubboPort: 20886
+    order: 70
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 活动服务
+  - name: service-activity
+    description: "活动服务"
+    module: services/service-activity
+    jar: target/service-activity-1.0.0-SNAPSHOT.jar
+    port: 8086
+    dubboPort: 20887
+    order: 80
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 支付服务
+  - name: service-pay
+    description: "支付服务"
+    module: services/service-pay
+    jar: target/service-pay-1.0.0-SNAPSHOT.jar
+    port: 8087
+    dubboPort: 20888
+    order: 90
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # 战斗服务
+  - name: service-battle
+    description: "战斗服务"
+    module: services/service-battle
+    jar: target/service-battle-1.0.0-SNAPSHOT.jar
+    port: 8088
+    dubboPort: 20889
+    order: 100
+    healthCheckUrl: "http://localhost:${port}/actuator/health"
+
+  # GM 后台服务
+  - name: service-gm
+    description: "GM后台服务"
+    module: services/service-gm
+    jar: target/service-gm-1.0.0-SNAPSHOT.jar
+    port: 8090
+    dubboPort: 0
+    order: 200
+    healthCheckUrl: "http://localhost:${port}/actuator/health"

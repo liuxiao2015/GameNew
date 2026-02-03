@@ -1,7 +1,7 @@
 # 游戏服务器框架文档中心
 
-> **版本**: v1.0  
-> **最后更新**: 2026-01  
+> **版本**: v2.0  
+> **最后更新**: 2026-02  
 > **设计理念**: 开发者只需关注业务逻辑，框架处理一切底层细节
 
 ---
@@ -46,7 +46,7 @@
 
 | 文档 | 说明 |
 |-----|------|
-| [架构设计文档](./架构设计/架构设计文档-v3.0.md) | 整体架构设计和模块划分 |
+| [架构设计文档](./架构设计/架构设计文档-v3.1.md) | 整体架构设计和模块划分 |
 | [框架搭建执行计划](./架构设计/框架搭建执行计划-v3.0.md) | 框架搭建的详细执行计划 |
 
 ### 示例代码
@@ -58,7 +58,44 @@
 
 ---
 
-## 🚀 快速上手
+## 🚀 快速启动
+
+### 一键启动 (推荐)
+
+```bash
+# Windows
+.\scripts\start-services.ps1 up
+
+# Linux/Mac
+./scripts/start-services.sh up
+```
+
+### 交互式管理
+
+```bash
+# 进入交互模式
+.\scripts\start-services.ps1
+
+# 常用命令
+launcher> up          # 一键启动 (Docker + 所有服务)
+launcher> status      # 查看服务状态
+launcher> list        # 列出所有服务
+launcher> down        # 停止所有服务
+launcher> help        # 显示帮助
+```
+
+### 访问地址
+
+| 服务 | 地址 |
+|------|------|
+| Nacos 控制台 | http://localhost:8848/nacos |
+| Grafana 监控 | http://localhost:3000 |
+| GM 后台 Swagger | http://localhost:8090/swagger-ui.html |
+| RabbitMQ 管理 | http://localhost:15672 |
+
+---
+
+## 📖 快速上手
 
 ### 1. 了解框架能力
 
@@ -89,36 +126,52 @@
 
 ---
 
-## 📁 目录结构
+## 📁 项目目录结构
 
 ```
-docs/
-├── README.md                          # 文档索引（本文件）
+game-server/
+├── common/                      # 通用模块
+│   ├── common-api/              # Dubbo 服务接口和 DTO
+│   ├── common-entity/           # MongoDB 实体和 Repository
+│   └── common-config/           # 游戏配置表
 │
-├── 框架能力总览.md                     # 框架能力矩阵和示例
-├── 服务开发指南.md                     # 各服务开发指南
-├── 完整登录流程.md                     # 登录流程详解
-├── 协议常量定义.md                     # 协议号定义规范
-├── 广播与推送.md                       # Dubbo 推送机制
-├── 热更新框架.md                       # 热更新支持
-├── 数据一致性与链路追踪.md             # 分布式一致性
-├── Dubbo优化.md                       # Dubbo 相关优化
+├── framework/                   # 框架模块
+│   ├── framework-common/        # 公共工具类
+│   ├── framework-core/          # 核心框架
+│   ├── framework-actor/         # Actor 并发模型
+│   ├── framework-data/          # 数据访问 (MongoDB/Redis)
+│   ├── framework-log/           # 日志模块
+│   └── framework-mq/            # 消息队列 (RabbitMQ)
 │
-├── 模块使用指南/                       # ⭐ 各模块详细使用指南
-│   ├── 数据层使用指南.md               # MongoDB + Redis
-│   ├── Actor模型使用指南.md            # Actor 并发模型
-│   ├── 定时任务使用指南.md             # XXL-Job 定时任务
-│   ├── DubboRPC使用指南.md             # Dubbo RPC 调用
-│   ├── 事件总线使用指南.md             # 本地/分布式事件
-│   └── 配置加载使用指南.md             # 游戏配置表
+├── services/                    # 微服务 (所有可启动的服务)
+│   ├── service-gateway/         # 网关服务
+│   ├── service-login/           # 登录服务
+│   ├── service-game/            # 游戏服务
+│   ├── service-guild/           # 公会服务
+│   ├── service-chat/            # 聊天服务
+│   ├── service-rank/            # 排行榜服务
+│   ├── service-scheduler/       # 定时任务服务
+│   ├── service-activity/        # 活动服务
+│   ├── service-pay/             # 支付服务
+│   ├── service-battle/          # 战斗服务
+│   └── service-gm/              # GM 后台服务
 │
-├── 架构设计/                          # 架构设计文档
-│   ├── 架构设计文档-v3.0.md
-│   └── 框架搭建执行计划-v3.0.md
+├── launcher/                    # 服务启动器 (独立模块)
 │
-└── 示例代码/                          # 代码示例
-    ├── 框架使用示例.java
-    └── Handler开发示例.java
+├── docker/                      # Docker 配置
+│   ├── docker-compose.yml
+│   ├── loki/                    # Loki 日志
+│   └── grafana/                 # Grafana 监控
+│
+├── scripts/                     # 启动脚本
+│
+├── docs/                        # 文档
+│   ├── 架构设计/
+│   ├── 框架拆解/
+│   ├── 模块使用指南/
+│   └── 示例代码/
+│
+└── launcher.yaml                # 启动器配置
 ```
 
 ---

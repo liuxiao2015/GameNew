@@ -1,0 +1,58 @@
+# ==================== Actuator 健康检查配置 ====================
+# 所有服务共享的监控端点配置
+
+# 管理端点配置
+management:
+  # 端点配置
+  endpoints:
+    web:
+      # 端点基础路径
+      base-path: /actuator
+      exposure:
+        # 暴露的端点
+        include: health,info,metrics,prometheus
+  # 单个端点配置
+  endpoint:
+    health:
+      # 显示详细健康信息
+      show-details: when_authorized
+      # 显示组件健康状态
+      show-components: when_authorized
+      # 健康检查探针
+      probes:
+        enabled: true
+    info:
+      enabled: true
+  # 健康检查指示器
+  health:
+    # MongoDB 健康检查
+    mongo:
+      enabled: true
+    # Redis 健康检查
+    redis:
+      enabled: true
+    # 磁盘空间检查
+    diskspace:
+      enabled: true
+      threshold: 10485760  # 10MB
+    # Dubbo 健康检查 (如果使用)
+    dubbo:
+      enabled: true
+
+# 服务信息配置
+info:
+  app:
+    name: ${spring.application.name}
+    description: Game Server Microservice
+    version: 1.0.0-SNAPSHOT
+  java:
+    version: ${java.version}
+
+# ==================== 优雅停机配置 ====================
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    # 优雅停机超时时间
+    timeout-per-shutdown-phase: 30s

@@ -1,5 +1,6 @@
 package com.game.service.gm.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,40 +13,27 @@ import java.util.Set;
  */
 @Data
 @Builder
+@Schema(description = "登录响应")
 public class LoginResponse {
 
-    /**
-     * 访问令牌
-     */
+    @Schema(description = "访问令牌，用于 API 请求认证", example = "abc123def456...")
     private String accessToken;
 
-    /**
-     * 刷新令牌
-     */
+    @Schema(description = "刷新令牌，用于获取新的访问令牌", example = "xyz789...")
     private String refreshToken;
 
-    /**
-     * 过期时间 (秒)
-     */
+    @Schema(description = "访问令牌过期时间（秒）", example = "28800")
     private long expiresIn;
 
-    /**
-     * 用户名
-     */
+    @Schema(description = "用户名", example = "admin")
     private String username;
 
-    /**
-     * 昵称
-     */
+    @Schema(description = "昵称", example = "管理员")
     private String nickname;
 
-    /**
-     * 角色
-     */
+    @Schema(description = "角色", example = "SUPER_ADMIN", allowableValues = {"SUPER_ADMIN", "ADMIN", "OPERATOR"})
     private String role;
 
-    /**
-     * 权限列表
-     */
+    @Schema(description = "权限列表", example = "[\"player:view\", \"player:edit\", \"mail:send\"]")
     private Set<String> permissions;
 }

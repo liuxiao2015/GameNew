@@ -1,0 +1,14 @@
+# ==================== Grafana Dashboard 配置 ====================
+apiVersion: 1
+
+providers:
+  - name: 'Game Server Dashboards'
+    orgId: 1
+    folder: 'Game Server'
+    folderUid: 'game-server'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

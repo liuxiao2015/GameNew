@@ -5,10 +5,46 @@ spring:
     name: service-game
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  # MongoDB 配置
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DATABASE:game_server}?authSource=${MONGO_AUTH_DB:game_server}&maxPoolSize=3&maxIdleTimeMS=30000&retryWrites=false
+      database: ${MONGO_DATABASE:game_server}
+      auto-index-creation: true
+      uuid-representation: standard
+    # Redis 配置
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:123456}
+      database: ${REDIS_DB:1}
+      timeout: 3s
+      connect-timeout: 3s
+  # RabbitMQ 配置
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+    virtual-host: ${RABBITMQ_VHOST:/game}
+    publisher-confirms: true
+    publisher-returns: true
 
 # ==================== 服务端口 ====================
 server:
   port: ${SERVER_PORT:8081}
+  # 优雅停机
+  shutdown: graceful
+
+# ==================== Actuator 配置 ====================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
 
 # ==================== Dubbo 配置 ====================
 dubbo:
@@ -32,37 +68,7 @@ dubbo:
     retries: 0
     check: false
 
-# ==================== MongoDB 配置 ====================
-spring:
-  data:
-    mongodb:
-      uri: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/${MONGO_DATABASE:game_server}?authSource=${MONGO_AUTH_DB:game_server}&maxPoolSize=3&maxIdleTimeMS=30000&retryWrites=false
-      database: ${MONGO_DATABASE:game_server}
-      auto-index-creation: true
-      uuid-representation: standard
-      # 注意：如需认证，请在 URI 中指定或使用环境变量
-      # uri: mongodb://username:password@localhost:27017/game_server
-    
-    # Redis 配置（Redisson使用 - 单机模式）
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:123456}
-      database: ${REDIS_DB:1}
-      timeout: 3s
-      connect-timeout: 3s
-
-  # RabbitMQ 配置
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASS:guest}
-    virtual-host: ${RABBITMQ_VHOST:/game}
-    publisher-confirms: true
-    publisher-returns: true
-
-# ==================== Actor 配置 ====================
+# ==================== 游戏配置 ====================
 game:
   actor:
     # 玩家 Actor 配置

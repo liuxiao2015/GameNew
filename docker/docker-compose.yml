@@ -110,6 +110,59 @@ services:
       timeout: 5s
       retries: 5
 
+  # ==================== Loki (日志聚合) ====================
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: game-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+    networks:
+      - game-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Promtail (日志采集) ====================
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: game-promtail
+    restart: unless-stopped
+    volumes:
+      - ./loki/promtail-config.yaml:/etc/promtail/config.yml:ro
+      - ../logs:/var/log/game:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - game-network
+
+  # ==================== Grafana (可视化) ====================
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: game-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - loki
+    networks:
+      - game-network
+
 # ==================== 网络 ====================
 networks:
   game-network:
@@ -126,4 +179,8 @@ volumes:
   xxljob_data:
     driver: local
   rabbitmq_data:
+    driver: local
+  loki_data:
+    driver: local
+  grafana_data:
     driver: local

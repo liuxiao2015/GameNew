@@ -1,86 +1,74 @@
-# Game Server 服务启动脚本 (PowerShell)
-# 用法: .\scripts\start-services.ps1 [ServiceName]
+# ==================== 游戏服务器启动脚本 ====================
+# 使用 service-launcher 统一管理服务
+# 
+# 用法:
+#   .\scripts\start-services.ps1           # 交互模式
+#   .\scripts\start-services.ps1 up        # 一键启动
+#   .\scripts\start-services.ps1 status    # 查看状态
+#   .\scripts\start-services.ps1 down      # 停止所有
 
 param(
-    [string]$Service = "all"
+    [Parameter(Position=0)]
+    [string]$Command = "",
+    
+    [Parameter(Position=1, ValueFromRemainingArguments=$true)]
+    [string[]]$Args
 )
 
+$ErrorActionPreference = "Stop"
+
+Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  Game Server 服务启动" -ForegroundColor Cyan
+Write-Host "       游戏服务器启动器 v2.0" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-$services = @{
-    "gateway" = @{
-        "jar" = "gateway\gateway-server\target\gateway-server-1.0.0-SNAPSHOT.jar"
-        "port" = 8080
-    }
-    "game" = @{
-        "jar" = "services\service-game\target\service-game-1.0.0-SNAPSHOT.jar"
-        "port" = 8081
-    }
-    "login" = @{
-        "jar" = "services\service-login\target\service-login-1.0.0-SNAPSHOT.jar"
-        "port" = 8082
-    }
-    "guild" = @{
-        "jar" = "services\service-guild\target\service-guild-1.0.0-SNAPSHOT.jar"
-        "port" = 8083
-    }
-    "chat" = @{
-        "jar" = "services\service-chat\target\service-chat-1.0.0-SNAPSHOT.jar"
-        "port" = 8084
-    }
-    "rank" = @{
-        "jar" = "services\service-rank\target\service-rank-1.0.0-SNAPSHOT.jar"
-        "port" = 8085
-    }
-    "scheduler" = @{
-        "jar" = "services\service-scheduler\target\service-scheduler-1.0.0-SNAPSHOT.jar"
-        "port" = 8086
-    }
-    "gm" = @{
-        "jar" = "services\service-gm\target\service-gm-1.0.0-SNAPSHOT.jar"
-        "port" = 8087
-    }
-}
+# 定位项目根目录
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+Set-Location $ProjectRoot
 
-Set-Location "$PSScriptRoot\.."
+# 检查 JAR 是否存在
+$LauncherJar = "$ProjectRoot\launcher\target\launcher-1.0.0-SNAPSHOT.jar"
 
-function Start-Service($name, $config) {
-    $jarPath = $config["jar"]
-    $port = $config["port"]
+if (-not (Test-Path $LauncherJar)) {
+    Write-Host "[INFO] 正在构建 launcher..." -ForegroundColor Yellow
     
-    if (-not (Test-Path $jarPath)) {
-        Write-Host "[WARN] JAR 文件不存在: $jarPath，请先运行构建" -ForegroundColor Yellow
-        return
-    }
+    # 使用 mvn 构建
+    $buildResult = & mvn package -DskipTests -q -pl launcher -am 2>&1
     
-    Write-Host "[INFO] 启动 $name (端口: $port)..." -ForegroundColor Yellow
-    
-    $env:SERVER_PORT = $port
-    Start-Process -FilePath "java" -ArgumentList "-jar", $jarPath -WindowStyle Normal
-    
-    Write-Host "[SUCCESS] $name 启动中..." -ForegroundColor Green
-}
-
-if ($Service -eq "all") {
-    Write-Host "[INFO] 启动所有服务..." -ForegroundColor Yellow
-    Write-Host ""
-    
-    foreach ($name in @("gateway", "game", "login", "guild", "chat", "rank", "scheduler", "gm")) {
-        Start-Service $name $services[$name]
-        Start-Sleep -Seconds 2
-    }
-} else {
-    if ($services.ContainsKey($Service)) {
-        Start-Service $Service $services[$Service]
-    } else {
-        Write-Host "[ERROR] 未知服务: $Service" -ForegroundColor Red
-        Write-Host "可用服务: $($services.Keys -join ', ')" -ForegroundColor Yellow
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERROR] 构建失败，请检查代码" -ForegroundColor Red
+        Write-Host $buildResult
         exit 1
     }
+    
+    Write-Host "[SUCCESS] 构建完成" -ForegroundColor Green
+    Write-Host ""
 }
 
+# 检查 Java
+$JavaCmd = "java"
+if ($env:JAVA_HOME) {
+    $JavaCmd = "$env:JAVA_HOME\bin\java.exe"
+}
+
+# 构建参数
+$AllArgs = @("-jar", $LauncherJar)
+if ($Command) {
+    $AllArgs += $Command
+}
+if ($Args) {
+    $AllArgs += $Args
+}
+
+# 运行启动器
+Write-Host "[INFO] 启动服务管理器..." -ForegroundColor Yellow
 Write-Host ""
-Write-Host "[INFO] 服务启动完成，请等待服务完全启动后访问" -ForegroundColor Cyan
+
+& $JavaCmd $AllArgs
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Host "[ERROR] 启动器退出异常" -ForegroundColor Red
+    exit $LASTEXITCODE
+}
