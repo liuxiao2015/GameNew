@@ -1,7 +1,7 @@
 package com.game.core.handler;
 
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.game.core.context.RequestContext;
 import com.game.core.net.session.Session;
 import lombok.extern.slf4j.Slf4j;
@@ -83,63 +83,63 @@ public abstract class BaseHandler {
      * 校验角色ID有效
      */
     protected void checkRoleId(long roleId) {
-        BizException.throwIfNotPositive(roleId, ErrorCode.ROLE_NOT_FOUND);
+        GameException.throwIfNotPositive(roleId, ErrorCode.ROLE_NOT_FOUND);
     }
 
     /**
      * 校验对象不为空
      */
     protected void checkNotNull(Object obj, ErrorCode errorCode) {
-        BizException.throwIfNull(obj, errorCode);
+        GameException.throwIfNull(obj, errorCode);
     }
 
     /**
      * 校验对象不为空 (带自定义消息)
      */
     protected void checkNotNull(Object obj, ErrorCode errorCode, String message) {
-        BizException.throwIfNull(obj, errorCode, message);
+        GameException.throwIfNull(obj, errorCode, message);
     }
 
     /**
      * 校验条件为真
      */
     protected void checkTrue(boolean condition, ErrorCode errorCode) {
-        BizException.throwIf(!condition, errorCode);
+        GameException.throwIf(!condition, errorCode);
     }
 
     /**
      * 校验条件为真 (带自定义消息)
      */
     protected void checkTrue(boolean condition, ErrorCode errorCode, String message) {
-        BizException.throwIf(!condition, errorCode, message);
+        GameException.throwIf(!condition, errorCode, message);
     }
 
     /**
      * 校验条件为假
      */
     protected void checkFalse(boolean condition, ErrorCode errorCode) {
-        BizException.throwIf(condition, errorCode);
+        GameException.throwIf(condition, errorCode);
     }
 
     /**
      * 校验字符串不为空
      */
     protected void checkNotEmpty(String str, ErrorCode errorCode) {
-        BizException.throwIfEmpty(str, errorCode);
+        GameException.throwIfEmpty(str, errorCode);
     }
 
     /**
      * 校验数值为正数
      */
     protected void checkPositive(long value, ErrorCode errorCode) {
-        BizException.throwIfNotPositive(value, errorCode);
+        GameException.throwIfNotPositive(value, errorCode);
     }
 
     /**
      * 校验数值范围
      */
     protected void checkRange(long value, long min, long max, ErrorCode errorCode) {
-        BizException.throwIf(value < min || value > max, errorCode);
+        GameException.throwIf(value < min || value > max, errorCode);
     }
 
     // ==================== 快捷抛出 ====================
@@ -148,14 +148,14 @@ public abstract class BaseHandler {
      * 抛出业务异常
      */
     protected void throwBiz(ErrorCode errorCode) {
-        throw new BizException(errorCode);
+        throw new GameException(errorCode);
     }
 
     /**
      * 抛出业务异常 (带自定义消息)
      */
     protected void throwBiz(ErrorCode errorCode, String message) {
-        throw new BizException(errorCode, message);
+        throw new GameException(errorCode, message);
     }
 
     // ==================== 日志便捷方法 ====================

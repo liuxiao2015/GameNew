@@ -2,7 +2,7 @@
 
 spring:
   application:
-    name: gateway-server
+    name: service-gateway
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   # Redis 配置

@@ -1,7 +1,7 @@
 package com.game.core.validation;
 
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class Validator {
      */
     public static void notNull(Object value, ErrorCode errorCode) {
         if (value == null) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -61,7 +61,7 @@ public class Validator {
      */
     public static void notNull(Object value, ErrorCode errorCode, String message) {
         if (value == null) {
-            throw new BizException(errorCode, message);
+            throw new GameException(errorCode, message);
         }
     }
 
@@ -70,7 +70,7 @@ public class Validator {
      */
     public static void notEmpty(String value, ErrorCode errorCode) {
         if (value == null || value.isEmpty()) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -79,7 +79,7 @@ public class Validator {
      */
     public static void notEmpty(String value, ErrorCode errorCode, String message) {
         if (value == null || value.isEmpty()) {
-            throw new BizException(errorCode, message);
+            throw new GameException(errorCode, message);
         }
     }
 
@@ -88,7 +88,7 @@ public class Validator {
      */
     public static void notEmpty(Collection<?> collection, ErrorCode errorCode) {
         if (collection == null || collection.isEmpty()) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -97,7 +97,7 @@ public class Validator {
      */
     public static void positive(long value, ErrorCode errorCode) {
         if (value <= 0) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -106,7 +106,7 @@ public class Validator {
      */
     public static void positive(long value, ErrorCode errorCode, String message) {
         if (value <= 0) {
-            throw new BizException(errorCode, message);
+            throw new GameException(errorCode, message);
         }
     }
 
@@ -115,7 +115,7 @@ public class Validator {
      */
     public static void nonNegative(long value, ErrorCode errorCode) {
         if (value < 0) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -124,7 +124,7 @@ public class Validator {
      */
     public static void range(long value, long min, long max, ErrorCode errorCode) {
         if (value < min || value > max) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -133,7 +133,7 @@ public class Validator {
      */
     public static void isTrue(boolean condition, ErrorCode errorCode) {
         if (!condition) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -142,7 +142,7 @@ public class Validator {
      */
     public static void isTrue(boolean condition, ErrorCode errorCode, String message) {
         if (!condition) {
-            throw new BizException(errorCode, message);
+            throw new GameException(errorCode, message);
         }
     }
 
@@ -151,7 +151,7 @@ public class Validator {
      */
     public static void isFalse(boolean condition, ErrorCode errorCode) {
         if (condition) {
-            throw new BizException(errorCode);
+            throw new GameException(errorCode);
         }
     }
 
@@ -259,7 +259,7 @@ public class Validator {
      */
     public void validate() {
         if (hasError) {
-            throw new BizException(firstError, firstMessage);
+            throw new GameException(firstError, firstMessage);
         }
     }
 

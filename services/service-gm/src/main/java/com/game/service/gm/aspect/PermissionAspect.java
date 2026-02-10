@@ -3,7 +3,7 @@ package com.game.service.gm.aspect;
 import com.game.common.enums.ErrorCode;
 import com.game.common.exception.GameException;
 import com.game.service.gm.annotation.RequirePermission;
-import com.game.service.gm.entity.GmAccount;
+import com.game.entity.document.GmAccount;
 import com.game.service.gm.service.GmAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

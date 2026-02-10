@@ -16,39 +16,85 @@
     <packaging>jar</packaging>
 
     <name>Service Launcher</name>
-    <description>服务启动器 - 通过配置文件一键启动/停止多个服务</description>
+    <description>服务启动器 - IDEA 一键启动所有微服务 (同 JVM 多 Context 模式)</description>
 
     <dependencies>
-        <!-- Framework Common -->
+        <!--
+            ==================== 所有微服务模块 ====================
+            Launcher 依赖全部服务，使其在 IDEA 中运行时可通过 classpath
+            自动发现并启动所有 @GameService 标记的启动类。
+        -->
         <dependency>
             <groupId>com.game</groupId>
-            <artifactId>framework-common</artifactId>
+            <artifactId>service-gateway</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-login</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-game</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-guild</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-chat</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-rank</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-scheduler</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-activity</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-pay</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-battle</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-gm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>service-robot</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
-        <!-- Spring Boot -->
+        <!-- Classpath 扫描 (Spring 提供) -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- Spring Boot (仅用于 SpringApplication.run) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- YAML 解析 -->
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-        </dependency>
-
-        <!-- Process 管理 -->
-        <dependency>
-            <groupId>org.zeroturnaround</groupId>
-            <artifactId>zt-exec</artifactId>
-            <version>1.12</version>
-        </dependency>
-
-        <!-- JLine (命令行交互) -->
-        <dependency>
-            <groupId>org.jline</groupId>
-            <artifactId>jline</artifactId>
-            <version>3.25.1</version>
+            <artifactId>spring-boot</artifactId>
         </dependency>
 
         <!-- Lombok -->
@@ -59,12 +105,5 @@
         </dependency>
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <!-- 不打 Spring Boot fat jar, launcher 仅在 IDEA 中直接运行 -->
 </project>

@@ -2,7 +2,7 @@ package com.game.examples;
 
 import com.game.api.common.MethodId;
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.game.core.handler.annotation.Protocol;
 import com.game.core.handler.annotation.ProtocolController;
 import com.game.core.net.session.Session;
@@ -46,7 +46,7 @@ public class HandlerExample {
         // 1. 获取玩家数据
         PlayerData player = playerService.getPlayer(roleId);
         if (player == null) {
-            throw new BizException(ErrorCode.PLAYER_NOT_FOUND);
+            throw new GameException(ErrorCode.PLAYER_NOT_FOUND);
         }
         
         // 2. 构建响应
@@ -78,10 +78,10 @@ public class HandlerExample {
         
         // 1. 参数校验
         if (itemUid <= 0) {
-            throw new BizException(ErrorCode.PARAM_ERROR, "物品ID无效");
+            throw new GameException(ErrorCode.PARAM_ERROR, "物品ID无效");
         }
         if (count <= 0 || count > 99) {
-            throw new BizException(ErrorCode.PARAM_ERROR, "使用数量无效");
+            throw new GameException(ErrorCode.PARAM_ERROR, "使用数量无效");
         }
         
         // 2. 业务处理
@@ -115,17 +115,17 @@ public class HandlerExample {
             // 1. 检查商品是否存在
             ShopItem shopItem = shopService.getShopItem(request.getShopItemId());
             if (shopItem == null) {
-                throw new BizException(ErrorCode.SHOP_ITEM_NOT_EXIST);
+                throw new GameException(ErrorCode.SHOP_ITEM_NOT_EXIST);
             }
             
             // 2. 检查购买次数
             if (shopService.getBuyCount(roleId, request.getShopItemId()) >= shopItem.getMaxBuyCount()) {
-                throw new BizException(ErrorCode.SHOP_BUY_LIMIT);
+                throw new GameException(ErrorCode.SHOP_BUY_LIMIT);
             }
             
             // 3. 检查货币是否足够
             if (!playerService.hasEnoughGold(roleId, shopItem.getPrice())) {
-                throw new BizException(ErrorCode.GOLD_NOT_ENOUGH);
+                throw new GameException(ErrorCode.GOLD_NOT_ENOUGH);
             }
             
             // 4. 扣除货币
@@ -141,13 +141,13 @@ public class HandlerExample {
                     .setCount(shopItem.getItemCount())
                     .build());
             
-        } catch (BizException e) {
+        } catch (GameException e) {
             // 业务异常直接抛出，框架会统一处理
             throw e;
         } catch (Exception e) {
             // 未知异常记录日志
             log.error("购买物品异常: roleId={}, shopItemId={}", roleId, request.getShopItemId(), e);
-            throw new BizException(ErrorCode.SYSTEM_ERROR);
+            throw new GameException(ErrorCode.SYSTEM_ERROR);
         }
     }
 

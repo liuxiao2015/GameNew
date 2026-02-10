@@ -14,9 +14,23 @@ import java.util.Optional;
 @Repository
 public interface MuteInfoRepository extends MongoRepository<MuteInfo, Long> {
 
-    Optional<MuteInfo> findByRoleId(long roleId);
+    /**
+     * 根据角色ID查找禁言信息
+     */
+    MuteInfo findByRoleId(long roleId);
 
+    /**
+     * 根据角色ID查找禁言信息 (Optional)
+     */
+    Optional<MuteInfo> findOptionalByRoleId(long roleId);
+
+    /**
+     * 根据角色ID删除禁言信息
+     */
     void deleteByRoleId(long roleId);
 
+    /**
+     * 检查角色是否被禁言
+     */
     boolean existsByRoleId(long roleId);
 }

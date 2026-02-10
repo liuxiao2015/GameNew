@@ -71,6 +71,49 @@ public class MqProducer {
     }
 
     /**
+     * 可靠发送消息到指定 Exchange（异常时抛出，调用方可感知发送失败）
+     *
+     * @param exchange   交换机
+     * @param routingKey 路由键
+     * @param message    消息
+     * @throws RuntimeException 发送失败时抛出
+     */
+    public void sendReliable(MqExchange exchange, String routingKey, MqMessage message) {
+        try {
+            message.setSourceService(applicationName);
+            String json = objectMapper.writeValueAsString(message);
+
+            MessageProperties props = new MessageProperties();
+            props.setContentType(MessageProperties.CONTENT_TYPE_JSON);
+            props.setMessageId(message.getMessageId());
+            props.setTimestamp(new java.util.Date(message.getTimestamp()));
+            props.setHeader("messageType", message.getMessageType());
+            props.setHeader("sourceService", applicationName);
+
+            Message amqpMessage = new Message(json.getBytes(), props);
+            rabbitTemplate.send(exchange.getName(), routingKey, amqpMessage);
+
+            log.debug("可靠发送MQ消息: exchange={}, routingKey={}, messageId={}",
+                    exchange.getName(), routingKey, message.getMessageId());
+        } catch (Exception e) {
+            log.error("可靠发送MQ消息失败: exchange={}, routingKey={}",
+                    exchange.getName(), routingKey, e);
+            throw new RuntimeException("MQ消息发送失败: exchange=" + exchange.getName(), e);
+        }
+    }
+
+    /**
+     * 可靠发送消息到指定 Exchange（不指定 routing key，异常时抛出）
+     *
+     * @param exchange 交换机
+     * @param message  消息
+     * @throws RuntimeException 发送失败时抛出
+     */
+    public void sendReliable(MqExchange exchange, MqMessage message) {
+        sendReliable(exchange, "", message);
+    }
+
+    /**
      * 发送消息并等待确认
      *
      * @param exchange   交换机

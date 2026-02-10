@@ -123,7 +123,7 @@ import com.game.actor.core.Actor;
 import com.game.actor.core.ActorMessage;
 import com.game.core.event.EventBus;
 import com.game.service.game.entity.PlayerData;
-import com.game.service.game.repository.PlayerRepository;
+import com.game.entity.repository.PlayerRepository;
 import com.game.service.game.event.PlayerEvents;
 import lombok.extern.slf4j.Slf4j;
 
@@ -307,7 +307,7 @@ package com.game.service.game.actor;
 import com.game.actor.core.ActorSystem;
 import com.game.actor.core.ActorSystem.ActorSystemConfig;
 import com.game.core.event.EventBus;
-import com.game.service.game.repository.PlayerRepository;
+import com.game.entity.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

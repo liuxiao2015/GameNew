@@ -1,6 +1,7 @@
 package com.game.entity.repository;
 
 import com.game.entity.document.GmOperationLog;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -15,11 +16,23 @@ import java.util.List;
 @Repository
 public interface GmOperationLogRepository extends MongoRepository<GmOperationLog, String> {
 
-    List<GmOperationLog> findByOperatorOrderByOpTimeDesc(String operator, Pageable pageable);
+    /**
+     * 根据操作者查询
+     */
+    Page<GmOperationLog> findByOperatorOrderByOperateTimeDesc(String operator, Pageable pageable);
 
-    List<GmOperationLog> findByOpTypeOrderByOpTimeDesc(String opType, Pageable pageable);
+    /**
+     * 根据操作类型查询
+     */
+    Page<GmOperationLog> findByOperationTypeOrderByOperateTimeDesc(String operationType, Pageable pageable);
 
-    List<GmOperationLog> findByOpTimeBetweenOrderByOpTimeDesc(long startTime, long endTime, Pageable pageable);
+    /**
+     * 根据时间范围查询
+     */
+    List<GmOperationLog> findByOperateTimeBetweenOrderByOperateTimeDesc(long startTime, long endTime);
 
-    List<GmOperationLog> findByTargetIdOrderByOpTimeDesc(String targetId, Pageable pageable);
+    /**
+     * 根据目标角色查询
+     */
+    List<GmOperationLog> findByTargetRoleIdOrderByOperateTimeDesc(long targetRoleId);
 }

@@ -1,5 +1,6 @@
 server:
-  port: 9070
+  port: ${SERVER_PORT:9070}
+  shutdown: graceful
 
 spring:
   application:
@@ -27,15 +28,15 @@ spring:
 # Dubbo
 dubbo:
   application:
-    name: service-activity
+    name: ${spring.application.name}
     qos-enable: false
   registry:
-    address: nacos://${NACOS_HOST:localhost}:8848
+    address: nacos://${NACOS_ADDR:localhost:8848}
     parameters:
-      namespace: ${NACOS_NAMESPACE:dev}
+      namespace: ${NACOS_NAMESPACE:public}
   protocol:
     name: dubbo
-    port: 20870
+    port: ${DUBBO_PORT:20870}
   provider:
     timeout: 5000
     retries: 0

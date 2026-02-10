@@ -14,7 +14,13 @@ import java.util.Optional;
 @Repository
 public interface GmAccountRepository extends MongoRepository<GmAccount, String> {
 
+    /**
+     * 根据用户名查找
+     */
     Optional<GmAccount> findByUsername(String username);
 
+    /**
+     * 检查用户名是否存在
+     */
     boolean existsByUsername(String username);
 }

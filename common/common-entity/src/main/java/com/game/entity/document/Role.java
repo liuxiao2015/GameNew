@@ -1,4 +1,4 @@
-package com.game.service.login.entity;
+package com.game.entity.document;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;

@@ -3,7 +3,7 @@ package com.game.service.guild.handler;
 import com.game.api.common.MethodId;
 import com.game.api.common.ProtocolConstants;
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.game.common.result.Result;
 import com.game.core.handler.BaseHandler;
 import com.game.core.handler.annotation.Protocol;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
  * - ProtocolController: 模块级协议处理器声明
  * - Protocol: 方法级协议处理声明
  * - BaseHandler: 通用处理器基类
- * - BizException: 业务异常统一处理
+ * - GameException: 业务异常统一处理
  * </pre>
  *
  * @author GameServer

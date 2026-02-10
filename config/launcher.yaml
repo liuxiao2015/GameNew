@@ -30,7 +30,7 @@ groups:
     description: "网关和核心服务"
     order: 10
     services:
-      - gateway-server
+      - service-gateway
       - service-login
   
   core:
@@ -54,10 +54,10 @@ groups:
 # 服务配置
 services:
   # ==================== 网关 ====================
-  - name: gateway-server
+  - name: service-gateway
     description: "网关服务"
-    module: "gateway/gateway-server"
-    jar: "target/gateway-server-1.0.0-SNAPSHOT.jar"
+    module: "services/service-gateway"
+    jar: "target/service-gateway-1.0.0-SNAPSHOT.jar"
     port: 8888
     dubboPort: 20880
     order: 10
@@ -76,7 +76,7 @@ services:
     dubboPort: 20881
     order: 20
     dependsOn:
-      - gateway-server
+      - service-gateway
     healthCheckUrl: "http://localhost:${port}/actuator/health"
     profiles: "dev"
 

@@ -322,13 +322,23 @@ public class SessionManager {
         while (iterator.hasNext()) {
             Session session = iterator.next().getValue();
             if (session.isDisconnected() && session.isReconnectTimeout()) {
-                iterator.remove();
-                sessionMap.remove(session.getSessionId());
-                reconnectTokenMap.remove(session.getReconnectToken());
-                cleanedCount++;
+                try {
+                    iterator.remove();
+                    sessionMap.remove(session.getSessionId());
+                    reconnectTokenMap.remove(session.getReconnectToken());
+                    cleanedCount++;
 
-                log.info("清理超时断线 Session: sessionId={}, roleId={}",
-                        session.getSessionId(), session.getRoleId());
+                    log.info("清理超时断线 Session: sessionId={}, roleId={}",
+                            session.getSessionId(), session.getRoleId());
+                } catch (Exception e) {
+                    // 确保即使单个 Session 清理失败，也不影响其他 Session 清理
+                    // 同时确保三个 Map 的一致性
+                    log.error("清理 Session 异常: sessionId={}, roleId={}",
+                            session.getSessionId(), session.getRoleId(), e);
+                    // 尝试兜底清理剩余 Map，避免不一致
+                    try { sessionMap.remove(session.getSessionId()); } catch (Exception ignored) {}
+                    try { reconnectTokenMap.remove(session.getReconnectToken()); } catch (Exception ignored) {}
+                }
             }
         }
 

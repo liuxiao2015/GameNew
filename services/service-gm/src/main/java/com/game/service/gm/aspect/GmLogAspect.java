@@ -2,9 +2,9 @@ package com.game.service.gm.aspect;
 
 import com.game.common.util.JsonUtil;
 import com.game.service.gm.annotation.GmLog;
-import com.game.service.gm.entity.GmAccount;
-import com.game.service.gm.entity.GmOperationLog;
-import com.game.service.gm.repository.GmOperationLogRepository;
+import com.game.entity.document.GmAccount;
+import com.game.entity.document.GmOperationLog;
+import com.game.entity.repository.GmOperationLogRepository;
 import com.game.service.gm.service.GmAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

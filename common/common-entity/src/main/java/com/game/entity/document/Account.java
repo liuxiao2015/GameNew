@@ -1,49 +1,60 @@
 package com.game.entity.document;
 
-import com.game.data.mongo.BaseDocument;
-import com.game.data.mongo.index.MongoIndex;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 /**
- * 账号数据 MongoDB 文档
+ * 账号实体
  *
  * @author GameServer
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Document(collection = "account")
-public class Account extends BaseDocument {
+public class Account {
 
     /**
      * 账号 ID
      */
-    @MongoIndex(unique = true)
-    private long accountId;
+    @Id
+    private String accountId;
 
     /**
-     * 用户名
+     * 平台类型 (1:自有 2:微信 3:QQ 4:Apple)
      */
-    @MongoIndex(unique = true)
+    private int platformType;
+
+    /**
+     * 平台用户 ID
+     */
+    @Indexed(unique = true)
+    private String platformUserId;
+
+    /**
+     * 用户名 (自有平台)
+     */
+    @Indexed(unique = true, sparse = true)
     private String username;
 
     /**
-     * 密码 (加密后)
+     * 密码 (自有平台, 加密存储)
      */
     private String password;
 
     /**
-     * 邮箱
-     */
-    @MongoIndex(sparse = true)
-    private String email;
-
-    /**
      * 手机号
      */
-    @MongoIndex(sparse = true)
+    @Indexed(sparse = true)
     private String phone;
+
+    /**
+     * 邮箱
+     */
+    @Indexed(sparse = true)
+    private String email;
 
     /**
      * 渠道
@@ -56,14 +67,29 @@ public class Account extends BaseDocument {
     private String deviceId;
 
     /**
+     * 账号状态 (0:禁用 1:正常)
+     */
+    private int status = 1;
+
+    /**
+     * 封禁结束时间 (0 表示永久)
+     */
+    private long banEndTime;
+
+    /**
+     * 封禁原因
+     */
+    private String banReason;
+
+    /**
+     * 角色 ID 列表
+     */
+    private List<Long> roleIds;
+
+    /**
      * 注册 IP
      */
     private String registerIp;
-
-    /**
-     * 注册时间
-     */
-    private long registerTime;
 
     /**
      * 最后登录时间
@@ -76,17 +102,28 @@ public class Account extends BaseDocument {
     private String lastLoginIp;
 
     /**
-     * 状态 (0:正常 1:封禁)
+     * 创建时间
      */
-    private int status = 0;
+    private long createTime;
 
     /**
-     * 封禁结束时间
+     * 更新时间
      */
-    private long banEndTime;
+    private long updateTime;
 
     /**
-     * 封禁原因
+     * 是否被封禁
      */
-    private String banReason;
+    public boolean isBanned() {
+        if (status == 0) {
+            return true;
+        }
+        if (banEndTime == 0) {
+            return false;
+        }
+        if (banEndTime == -1) {
+            return true; // 永久封禁
+        }
+        return System.currentTimeMillis() < banEndTime;
+    }
 }

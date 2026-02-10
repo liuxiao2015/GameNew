@@ -1,40 +1,40 @@
 package com.game.entity.document;
 
-import com.game.data.mongo.BaseDocument;
-import com.game.data.mongo.index.CompoundIndex;
-import com.game.data.mongo.index.MongoIndex;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * 聊天消息 MongoDB 文档
+ * 聊天消息实体
  *
  * @author GameServer
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Document(collection = "chat_message")
-@CompoundIndex(name = "idx_channel_time", def = "{\"channel\": 1, \"sendTime\": -1}")
-@CompoundIndex(name = "idx_private_chat", def = "{\"senderId\": 1, \"targetId\": 1, \"sendTime\": -1}")
-public class ChatMessage extends BaseDocument {
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_channel_time", def = "{'channel': 1, 'sendTime': -1}"),
+    @CompoundIndex(name = "idx_private_chat", def = "{'senderId': 1, 'targetId': 1, 'sendTime': -1}")
+})
+public class ChatMessage {
 
     /**
      * 消息 ID
      */
-    @MongoIndex(unique = true)
+    @Id
     private long msgId;
 
     /**
      * 频道 (1:世界 2:公会 3:私聊 4:系统)
      */
-    @MongoIndex
+    @Indexed
     private int channel;
 
     /**
      * 发送者 ID
      */
-    @MongoIndex
     private long senderId;
 
     /**
@@ -65,16 +65,21 @@ public class ChatMessage extends BaseDocument {
     /**
      * 发送时间
      */
-    @MongoIndex
+    @Indexed
     private long sendTime;
 
     /**
-     * 目标 ID (私聊时为对方 ID)
+     * 目标 ID (私聊时为接收者, 公会时为公会 ID)
      */
     private long targetId;
 
     /**
-     * 公会 ID (公会频道时)
+     * 目标名字
+     */
+    private String targetName;
+
+    /**
+     * 公会 ID (公会频道使用)
      */
     private long guildId;
 

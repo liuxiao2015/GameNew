@@ -1,7 +1,7 @@
 package com.game.core.handler;
 
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.game.core.context.RequestContext;
 import com.game.core.net.codec.GameMessage;
 import com.game.core.net.session.Session;
@@ -139,7 +139,7 @@ public class ProtocolDispatcher {
             // 6. 同步执行
             return executeHandler(session, message, protocolMethod, startNanos);
 
-        } catch (BizException e) {
+        } catch (GameException e) {
             // 业务异常 - 正常的业务错误，不打印堆栈
             log.info("业务异常: protocolKey={}, code={}, message={}, roleId={}",
                     protocolKey, e.getCode(), e.getMessage(), session.getRoleId());
@@ -151,7 +151,7 @@ public class ProtocolDispatcher {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
 
             // 如果根因是业务异常，按业务异常处理
-            if (cause instanceof BizException bizEx) {
+            if (cause instanceof GameException bizEx) {
                 log.info("业务异常: protocolKey={}, code={}, message={}, roleId={}",
                         protocolKey, bizEx.getCode(), bizEx.getMessage(), session.getRoleId());
                 serverMonitor.recordRequest(false);

@@ -152,6 +152,13 @@ public class ConfigLoader {
                 log.error("关闭文件监听器失败", e);
             }
         }
+        if (httpClient != null) {
+            try {
+                httpClient.close();
+            } catch (Exception e) {
+                log.error("关闭 HttpClient 失败", e);
+            }
+        }
     }
 
     /**

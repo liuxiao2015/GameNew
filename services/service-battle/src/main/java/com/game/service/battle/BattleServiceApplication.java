@@ -1,5 +1,6 @@
 package com.game.service.battle;
 
+import com.game.common.launcher.GameService;
 import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,6 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  *
  * @author GameServer
  */
+@GameService(name = "service-battle", order = 100, description = "战斗服务")
 @SpringBootApplication
 @EnableDubbo
 @EnableScheduling

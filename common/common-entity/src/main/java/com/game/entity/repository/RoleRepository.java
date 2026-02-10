@@ -1,7 +1,8 @@
-package com.game.service.login.repository;
+package com.game.entity.repository;
 
-import com.game.service.login.entity.Role;
+import com.game.entity.document.Role;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import java.util.Optional;
  *
  * @author GameServer
  */
+@Repository
 public interface RoleRepository extends MongoRepository<Role, Long> {
 
     /**

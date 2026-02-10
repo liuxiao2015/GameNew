@@ -1,7 +1,7 @@
 package com.game.core.rpc;
 
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.game.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,8 +48,8 @@ public final class RpcTemplate {
      * 执行 RPC 调用
      * <p>
      * 自动处理异常：
-     * - Result 失败 -> 抛出 BizException
-     * - 调用异常 -> 抛出 BizException(RPC_ERROR)
+     * - Result 失败 -> 抛出 GameException
+     * - 调用异常 -> 抛出 GameException(RPC_ERROR)
      * </p>
      *
      * @param supplier RPC 调用
@@ -72,17 +72,17 @@ public final class RpcTemplate {
         try {
             Result<T> result = supplier.get();
             if (result == null) {
-                throw new BizException(failCode);
+                throw new GameException(failCode);
             }
             if (!result.isSuccess()) {
-                throw new BizException(result.getCode(), result.getMessage());
+                throw new GameException(result.getCode(), result.getMessage());
             }
             return result.getData();
-        } catch (BizException e) {
+        } catch (GameException e) {
             throw e;
         } catch (Exception e) {
             log.error("RPC 调用异常", e);
-            throw new BizException(failCode, e);
+            throw new GameException(failCode, e);
         }
     }
 
@@ -157,7 +157,7 @@ public final class RpcTemplate {
     public static <T> T callNotNull(Supplier<Result<T>> supplier, ErrorCode failCode) {
         T data = call(supplier, failCode);
         if (data == null) {
-            throw new BizException(failCode);
+            throw new GameException(failCode);
         }
         return data;
     }

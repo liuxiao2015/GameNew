@@ -12,9 +12,9 @@ import com.game.core.security.SecurityFilter;
 import com.game.data.redis.RedisService;
 import com.game.proto.ChatMessage;
 import com.game.proto.S2C_ChatPush;
-import com.game.service.chat.entity.MuteInfo;
-import com.game.service.chat.repository.ChatMessageRepository;
-import com.game.service.chat.repository.MuteInfoRepository;
+import com.game.entity.document.MuteInfo;
+import com.game.entity.repository.ChatMessageRepository;
+import com.game.entity.repository.MuteInfoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -338,8 +338,8 @@ public class ChatBusinessService {
         // 使用虚拟线程异步保存
         Thread.startVirtualThread(() -> {
             try {
-                com.game.service.chat.entity.ChatMessage entity = 
-                        new com.game.service.chat.entity.ChatMessage();
+                com.game.entity.document.ChatMessage entity = 
+                        new com.game.entity.document.ChatMessage();
                 entity.setMsgId(message.getMsgId());
                 entity.setChannel(channel);
                 entity.setSenderId(message.getSenderId());

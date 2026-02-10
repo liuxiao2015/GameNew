@@ -190,11 +190,11 @@ public class PlayerHandler extends BaseHandler {
     /**
      * 抛出业务异常
      * <p>
-     * 不再返回错误消息，而是抛出 BizException，由 ProtocolDispatcher 统一处理
+     * 不再返回错误消息，而是抛出 GameException，由 ProtocolDispatcher 统一处理
      * </p>
      */
     private void throwError(ErrorCode errorCode) {
-        throw new com.game.common.exception.BizException(errorCode);
+        throw new com.game.common.exception.GameException(errorCode);
     }
 
 }

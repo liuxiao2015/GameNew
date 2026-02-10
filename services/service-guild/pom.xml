@@ -40,6 +40,10 @@
             <groupId>com.game</groupId>
             <artifactId>common-entity</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>framework-mq</artifactId>
+        </dependency>
 
         <!-- Spring Boot -->
         <dependency>

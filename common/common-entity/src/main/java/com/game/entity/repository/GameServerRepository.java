@@ -1,6 +1,6 @@
-package com.game.service.login.repository;
+package com.game.entity.repository;
 
-import com.game.service.login.entity.GameServer;
+import com.game.entity.document.GameServer;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

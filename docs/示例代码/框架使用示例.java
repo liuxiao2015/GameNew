@@ -6,7 +6,7 @@ import com.game.actor.core.ActorSystem;
 import com.game.api.guild.GuildDTO;
 import com.game.api.guild.GuildService;
 import com.game.common.enums.ErrorCode;
-import com.game.common.exception.BizException;
+import com.game.common.exception.GameException;
 import com.game.common.result.Result;
 import com.game.config.container.ItemConfigContainer;
 import com.game.config.container.LevelConfigContainer;
@@ -241,7 +241,7 @@ public class FrameworkUsageExample {
         public GuildDTO getGuild(long roleId) {
             Result<GuildDTO> result = guildService.getPlayerGuild(roleId);
             if (!result.isSuccess()) {
-                throw new BizException(ErrorCode.of(result.getCode()));
+                throw new GameException(ErrorCode.of(result.getCode()));
             }
             return result.getData();
         }
@@ -333,7 +333,7 @@ public class FrameworkUsageExample {
         public void useItem(Session session, Object request) {
             // 检查物品
             // if (!itemConfig.exists(itemId)) {
-            //     throw new BizException(ErrorCode.ITEM_NOT_EXIST);
+            //     throw new GameException(ErrorCode.ITEM_NOT_EXIST);
             // }
         }
     }

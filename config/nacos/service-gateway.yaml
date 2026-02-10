@@ -78,7 +78,7 @@ service-router:
 # ==================== Dubbo 消费者配置 ====================
 dubbo:
   application:
-    name: gateway-server
+    name: service-gateway
     qos-enable: false
   consumer:
     timeout: 3000

@@ -1,5 +1,6 @@
 package com.game.gateway;
 
+import com.game.common.launcher.GameService;
 import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
  *
  * @author GameServer
  */
+@GameService(name = "service-gateway", order = 10, description = "网关服务")
 @SpringBootApplication
 @EnableDubbo
 @ComponentScan(basePackages = {

@@ -1,32 +1,35 @@
 package com.game.entity.document;
 
-import com.game.data.mongo.BaseDocument;
-import com.game.data.mongo.index.MongoIndex;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
 /**
- * GM 账号 MongoDB 文档
+ * GM 账号实体
  *
  * @author GameServer
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Document(collection = "gm_account")
-public class GmAccount extends BaseDocument {
+public class GmAccount {
 
     /**
-     * GM 账号名
+     * 账号 ID
      */
-    @MongoIndex(unique = true)
+    @Id
+    private String id;
+
+    /**
+     * 用户名
+     */
+    @Indexed(unique = true)
     private String username;
 
     /**
-     * 密码 (加密后)
+     * 密码 (加密存储)
      */
     private String password;
 
@@ -36,19 +39,29 @@ public class GmAccount extends BaseDocument {
     private String nickname;
 
     /**
-     * 角色 (admin/operator/viewer)
+     * 邮箱
+     */
+    private String email;
+
+    /**
+     * 手机号
+     */
+    private String phone;
+
+    /**
+     * 角色 (SUPER_ADMIN, ADMIN, OPERATOR)
      */
     private String role;
 
     /**
      * 权限列表
      */
-    private List<String> permissions = new ArrayList<>();
+    private Set<String> permissions;
 
     /**
-     * 状态 (0:正常 1:禁用)
+     * 状态 (0:禁用 1:启用)
      */
-    private int status = 0;
+    private int status = 1;
 
     /**
      * 最后登录时间
@@ -59,4 +72,14 @@ public class GmAccount extends BaseDocument {
      * 最后登录 IP
      */
     private String lastLoginIp;
+
+    /**
+     * 创建时间
+     */
+    private long createTime;
+
+    /**
+     * 更新时间
+     */
+    private long updateTime;
 }

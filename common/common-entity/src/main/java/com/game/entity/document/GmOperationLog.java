@@ -1,84 +1,82 @@
 package com.game.entity.document;
 
-import com.game.data.mongo.BaseDocument;
-import com.game.data.mongo.index.CompoundIndex;
-import com.game.data.mongo.index.MongoIndex;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
- * GM 操作日志 MongoDB 文档
+ * GM 操作日志实体
  *
  * @author GameServer
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Document(collection = "gm_operation_log")
-@CompoundIndex(name = "idx_operator_time", def = "{\"operator\": 1, \"opTime\": -1}")
-public class GmOperationLog extends BaseDocument {
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_operator_time", def = "{'operator': 1, 'operateTime': -1}"),
+    @CompoundIndex(name = "idx_type_time", def = "{'operationType': 1, 'operateTime': -1}")
+})
+public class GmOperationLog {
 
     /**
      * 日志 ID
      */
-    @MongoIndex(unique = true)
-    private long logId;
+    @Id
+    private String id;
 
     /**
-     * 操作人
+     * 操作者
      */
-    @MongoIndex
     private String operator;
 
     /**
      * 操作类型
      */
-    @MongoIndex
-    private String opType;
+    private String operationType;
 
     /**
-     * 操作时间
+     * 操作模块
      */
-    @MongoIndex
-    private long opTime;
+    private String module;
 
     /**
-     * 目标类型 (player/guild/server)
-     */
-    private String targetType;
-
-    /**
-     * 目标 ID
-     */
-    private String targetId;
-
-    /**
-     * 操作内容描述
+     * 操作描述
      */
     private String description;
 
     /**
-     * 请求参数 (JSON)
+     * 请求参数
      */
     private String requestParams;
 
     /**
-     * 响应结果 (JSON)
+     * 响应结果
      */
     private String responseResult;
 
     /**
+     * 目标角色 ID (如果有)
+     */
+    private long targetRoleId;
+
+    /**
      * 操作 IP
      */
-    private String operatorIp;
+    private String operateIp;
 
     /**
-     * 是否成功
+     * 操作时间
      */
-    private boolean success;
+    private long operateTime;
 
     /**
-     * 错误信息
+     * 操作状态 (0:失败 1:成功)
      */
-    private String errorMessage;
+    private int status;
+
+    /**
+     * 备注
+     */
+    private String remark;
 }
