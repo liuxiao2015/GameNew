@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 
 /**
  * 协议分发器
@@ -17,7 +16,7 @@ import java.util.function.BiFunction;
  * @author GameServer
  */
 @Slf4j
-@Component
+@Component("gatewayProtocolDispatcher")
 public class ProtocolDispatcher {
 
     /**

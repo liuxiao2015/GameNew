@@ -1,13 +1,13 @@
 package com.game.launcher;
 
 import com.game.common.launcher.GameService;
+import com.game.launcher.infra.EmbeddedNacos;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
-import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -54,7 +54,7 @@ public class LauncherApplication {
         parseArgs(args, onlyServices, excludeServices);
 
         // 2. 扫描 classpath 发现所有 @GameService 标注的类
-        System.out.println("[1/3] 扫描 @GameService 注解...");
+        System.out.println("[1/4] 扫描 @GameService 注解...");
         List<ServiceInfo> allServices = scanGameServices();
         DISCOVERED_SERVICES.addAll(allServices);
 
@@ -78,13 +78,23 @@ public class LauncherApplication {
             return;
         }
 
-        // 4. 检查基础设施
-        System.out.println("[2/3] 检查基础设施...");
+        // 4. 启动基础设施 (Nacos)
+        System.out.println("[2/4] 启动基础设施...");
+        try {
+            EmbeddedNacos.ensureRunning();
+        } catch (Exception e) {
+            System.err.println("  [!!] Nacos 启动失败: " + e.getMessage());
+            System.err.println("  提示: 可手动启动 Nacos 后重试，或检查 JAVA_HOME 环境变量");
+        }
+        System.out.println();
+
+        // 5. 检查基础设施
+        System.out.println("[3/4] 检查基础设施...");
         checkInfrastructure();
         System.out.println();
 
-        // 5. 按 order 顺序逐个启动
-        System.out.println("[3/3] 启动 " + toStart.size() + " 个微服务...");
+        // 6. 按 order 顺序逐个启动
+        System.out.println("[4/4] 启动 " + toStart.size() + " 个微服务...");
         System.out.println("================================================================");
 
         // 注册 JVM 关闭钩子
@@ -92,6 +102,8 @@ public class LauncherApplication {
             System.out.println();
             System.out.println("正在关闭所有服务...");
             shutdownAll();
+            // 最后关闭 Nacos
+            EmbeddedNacos.stop();
             System.out.println("所有服务已关闭。");
         }));
 
@@ -110,7 +122,7 @@ public class LauncherApplication {
         printStatus();
 
         // 7. 进入交互模式
-        System.out.println("命令: status | stop <name> | start <name> | restart <name> | list | exit");
+        System.out.println("命令: status | stop <name> | start <name> | restart <name> | list | nacos <cmd> | exit");
         System.out.println();
         interactiveLoop();
     }
@@ -118,46 +130,86 @@ public class LauncherApplication {
     // ======================== 扫描 ========================
 
     /**
+     * 已知的服务启动类全限定名 (兜底列表)
+     * <p>
+     * 当 classpath 扫描失败时，直接尝试加载这些类。
+     * 新增服务只需在此添加一行即可。
+     * </p>
+     */
+    private static final String[] KNOWN_SERVICE_CLASSES = {
+            "com.game.gateway.GatewayApplication",
+            "com.game.service.login.LoginServiceApplication",
+            "com.game.service.game.GameServiceApplication",
+            "com.game.service.guild.GuildServiceApplication",
+            "com.game.service.chat.ChatServiceApplication",
+            "com.game.service.rank.RankServiceApplication",
+            "com.game.service.scheduler.SchedulerApplication",
+            "com.game.service.activity.ActivityServiceApplication",
+            "com.game.service.pay.PayServiceApplication",
+            "com.game.service.battle.BattleServiceApplication",
+            "com.game.service.gm.GmServiceApplication",
+            "com.game.robot.RobotApplication",
+    };
+
+    /**
      * 扫描 classpath 中所有带 @GameService 注解的类
+     * <p>
+     * 策略:
+     * 1. 先用 Spring ClassPathScanning (与 @ComponentScan 内部机制相同)
+     * 2. 若未发现，回退到直接按类名加载已知服务列表
+     * </p>
      */
     private static List<ServiceInfo> scanGameServices() {
         List<ServiceInfo> result = new ArrayList<>();
+
+        // ---- 策略一: Spring ClassPath 扫描 ----
         try {
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            CachingMetadataReaderFactory factory = new CachingMetadataReaderFactory(resolver);
+            ClassPathScanningCandidateComponentProvider scanner =
+                    new ClassPathScanningCandidateComponentProvider(false);
+            scanner.addIncludeFilter(new AnnotationTypeFilter(GameService.class));
 
-            // 扫描所有 com.game 包下的类
-            Resource[] resources = resolver.getResources("classpath*:com/game/**/*.class");
-
-            for (Resource resource : resources) {
-                if (!resource.isReadable()) continue;
-                try {
-                    MetadataReader reader = factory.getMetadataReader(resource);
-                    var annotations = reader.getAnnotationMetadata();
-
-                    if (annotations.hasAnnotation(GameService.class.getName())) {
-                        Map<String, Object> attrs = annotations.getAnnotationAttributes(GameService.class.getName());
-                        if (attrs == null) continue;
-
-                        String name = (String) attrs.get("name");
-                        int order = (int) attrs.get("order");
-                        String desc = (String) attrs.get("description");
-                        boolean enabled = (boolean) attrs.get("enabled");
-
-                        Class<?> clazz = Class.forName(reader.getClassMetadata().getClassName());
-                        result.add(new ServiceInfo(name, order, desc, enabled, clazz));
-                    }
-                } catch (Exception e) {
-                    // 忽略无法解析的类 (可能缺少依赖)
+            // 扫描多个根包 (覆盖 com.game.gateway, com.game.service.*, com.game.robot)
+            for (String basePackage : List.of("com.game.gateway", "com.game.service", "com.game.robot")) {
+                for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+                    addFromClassName(result, bd.getBeanClassName());
                 }
             }
         } catch (Exception e) {
-            System.err.println("扫描 @GameService 失败: " + e.getMessage());
+            System.err.println("  ClassPath 扫描异常: " + e.getMessage());
+        }
+
+        // ---- 策略二: 兜底直接类加载 ----
+        if (result.isEmpty()) {
+            System.out.println("  ClassPath 扫描未命中，使用直接类加载...");
+            for (String className : KNOWN_SERVICE_CLASSES) {
+                addFromClassName(result, className);
+            }
         }
 
         // 按 order 排序
         result.sort(Comparator.comparingInt(s -> s.order));
         return result;
+    }
+
+    /**
+     * 尝试加载指定类名，读取 @GameService 注解信息并加入列表
+     */
+    private static void addFromClassName(List<ServiceInfo> result, String className) {
+        try {
+            Class<?> clazz = Class.forName(className);
+            GameService anno = clazz.getAnnotation(GameService.class);
+            if (anno != null) {
+                // 避免重复
+                boolean exists = result.stream().anyMatch(s -> s.name.equals(anno.name()));
+                if (!exists) {
+                    result.add(new ServiceInfo(anno.name(), anno.order(), anno.description(), anno.enabled(), clazz));
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            // 该模块未在 classpath 中，跳过
+        } catch (NoClassDefFoundError e) {
+            // 类存在但缺少依赖，跳过
+        }
     }
 
     // ======================== 启动 ========================
@@ -299,6 +351,7 @@ public class LauncherApplication {
                     case "exit", "quit" -> {
                         System.out.println("正在关闭所有服务...");
                         shutdownAll();
+                        EmbeddedNacos.stop();
                         System.out.println("再见！");
                         System.exit(0);
                     }
@@ -344,6 +397,36 @@ public class LauncherApplication {
                                             LauncherApplication::startService,
                                             () -> System.out.println("未知服务: " + svcName)
                                     );
+                        }
+                    }
+                    case "nacos" -> {
+                        String subCmd = parts.length >= 2 ? parts[1].toLowerCase() : "status";
+                        switch (subCmd) {
+                            case "start" -> {
+                                try {
+                                    EmbeddedNacos.ensureRunning();
+                                } catch (Exception e) {
+                                    System.err.println("Nacos 启动失败: " + e.getMessage());
+                                }
+                            }
+                            case "stop" -> EmbeddedNacos.stop();
+                            case "restart" -> {
+                                EmbeddedNacos.stop();
+                                try {
+                                    Thread.sleep(2000);
+                                    EmbeddedNacos.ensureRunning();
+                                } catch (Exception e) {
+                                    System.err.println("Nacos 重启失败: " + e.getMessage());
+                                }
+                            }
+                            case "status" -> {
+                                boolean running = isPortOpen(8848);
+                                boolean managed = EmbeddedNacos.isManagedByUs();
+                                System.out.printf("  Nacos: %s%s%n",
+                                        running ? "运行中" : "未运行",
+                                        managed ? " (由 Launcher 管理)" : running ? " (外部实例)" : "");
+                            }
+                            default -> System.out.println("用法: nacos [start|stop|restart|status]");
                         }
                     }
                     case "help", "h" -> printHelp();
@@ -393,12 +476,21 @@ public class LauncherApplication {
         System.out.println(" | (_ | / _ \\ | |\\/| || _|  \\__ \\| _| |   / \\ V / | _| |   / ");
         System.out.println("  \\___|/_/ \\_\\|_|  |_||___| |___/|___||_|_\\  \\_/  |___||_|_\\ ");
         System.out.println();
-        System.out.println("           一键启动器 v2.0 | @GameService 自动发现");
+        System.out.println("       一键启动器 v3.0 | @GameService 自动发现 | Nacos 自管理");
         System.out.println("================================================================");
         System.out.println();
     }
 
     private static void printStatus() {
+        System.out.println();
+        System.out.println("基础设施:");
+        System.out.println("────────────────────────────────────────────");
+        boolean nacosRunning = isPortOpen(8848);
+        System.out.printf("  [%s] Nacos %s%n",
+                nacosRunning ? "OK" : "!!",
+                nacosRunning
+                        ? (EmbeddedNacos.isManagedByUs() ? "(Launcher 管理)" : "(外部实例)")
+                        : "(未运行)");
         System.out.println();
         System.out.println("运行中的服务:");
         System.out.println("────────────────────────────────────────────");
@@ -444,6 +536,7 @@ public class LauncherApplication {
         System.out.println("  start <服务名|all>      启动服务");
         System.out.println("  stop <服务名|all>       停止服务");
         System.out.println("  restart <服务名>        重启服务");
+        System.out.println("  nacos [start|stop|restart|status]  管理 Nacos");
         System.out.println("  exit / quit             停止所有服务并退出");
         System.out.println("  help / h                显示此帮助");
         System.out.println();

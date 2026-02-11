@@ -1,9 +1,9 @@
 package com.game.core.lock;
 
-import com.game.common.util.StringUtil;
-import com.game.data.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -11,14 +11,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * 分布式锁服务
+ * 分布式锁服务 (基于 Redisson)
  * <p>
- * 基于 Redis 实现的可靠分布式锁：
+ * 使用 Redisson RLock 代替自研实现，自动具备：
  * <ul>
- *     <li>支持重试等待获取锁</li>
- *     <li>自动续期 (看门狗机制)</li>
- *     <li>安全释放 (只释放自己的锁)</li>
- *     <li>支持可重入</li>
+ *     <li>可重入锁</li>
+ *     <li>Watch-Dog 自动续期 (默认 30s)</li>
+ *     <li>Pub/Sub 通知唤醒 (不再轮询)</li>
+ *     <li>Lua 原子操作</li>
+ *     <li>RedLock 多节点支持 (可选)</li>
  * </ul>
  * </p>
  *
@@ -27,13 +28,11 @@ import java.util.function.Supplier;
  * {@code
  * // 简单使用
  * lockService.executeWithLock("order:create:" + orderId, () -> {
- *     // 业务逻辑
  *     return createOrder();
  * });
  *
  * // 手动控制
- * String lockKey = "player:trade:" + roleId;
- * LockContext lock = lockService.tryLock(lockKey, Duration.ofSeconds(10));
+ * LockContext lock = lockService.tryLock("player:trade:" + roleId, Duration.ofSeconds(10));
  * try {
  *     if (lock.isLocked()) {
  *         // 业务逻辑
@@ -51,37 +50,16 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor
 public class LockService {
 
-    private final RedisService redisService;
+    private final RedissonClient redissonClient;
 
-    /**
-     * 锁 Key 前缀
-     */
     private static final String LOCK_KEY_PREFIX = "lock:";
-
-    /**
-     * 默认锁超时时间
-     */
     private static final Duration DEFAULT_LOCK_TIMEOUT = Duration.ofSeconds(30);
-
-    /**
-     * 默认等待获取锁超时时间
-     */
     private static final Duration DEFAULT_WAIT_TIMEOUT = Duration.ofSeconds(5);
-
-    /**
-     * 重试间隔 (毫秒)
-     */
-    private static final long RETRY_INTERVAL_MS = 50;
 
     // ==================== 自动管理锁 ====================
 
     /**
      * 在锁保护下执行任务
-     *
-     * @param lockName 锁名称
-     * @param task     任务
-     * @param <T>      返回类型
-     * @return 任务执行结果
      */
     public <T> T executeWithLock(String lockName, Supplier<T> task) {
         return executeWithLock(lockName, DEFAULT_LOCK_TIMEOUT, DEFAULT_WAIT_TIMEOUT, task);
@@ -126,16 +104,20 @@ public class LockService {
      */
     public LockContext tryLock(String lockName, Duration lockTimeout) {
         String lockKey = LOCK_KEY_PREFIX + lockName;
-        String requestId = generateRequestId();
+        RLock rLock = redissonClient.getLock(lockKey);
 
-        boolean success = redisService.setIfAbsent(lockKey, requestId, lockTimeout);
-
-        if (success) {
-            log.debug("获取锁成功: lockName={}, requestId={}", lockName, requestId);
-            return new LockContext(lockKey, requestId, true, this);
-        } else {
-            log.debug("获取锁失败: lockName={}", lockName);
-            return new LockContext(lockKey, requestId, false, this);
+        try {
+            boolean success = rLock.tryLock(0, lockTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (success) {
+                log.debug("获取锁成功: lockName={}", lockName);
+                return new LockContext(rLock, true);
+            } else {
+                log.debug("获取锁失败: lockName={}", lockName);
+                return new LockContext(rLock, false);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new LockContext(rLock, false);
         }
     }
 
@@ -144,57 +126,38 @@ public class LockService {
      */
     public LockContext lock(String lockName, Duration lockTimeout, Duration waitTimeout) {
         String lockKey = LOCK_KEY_PREFIX + lockName;
-        String requestId = generateRequestId();
+        RLock rLock = redissonClient.getLock(lockKey);
 
-        long deadline = System.currentTimeMillis() + waitTimeout.toMillis();
-
-        while (System.currentTimeMillis() < deadline) {
-            boolean success = redisService.setIfAbsent(lockKey, requestId, lockTimeout);
-
+        try {
+            boolean success = rLock.tryLock(waitTimeout.toMillis(), lockTimeout.toMillis(), TimeUnit.MILLISECONDS);
             if (success) {
-                log.debug("获取锁成功: lockName={}, requestId={}", lockName, requestId);
-                return new LockContext(lockKey, requestId, true, this);
+                log.debug("获取锁成功: lockName={}", lockName);
+                return new LockContext(rLock, true);
+            } else {
+                log.debug("获取锁超时: lockName={}", lockName);
+                return new LockContext(rLock, false);
             }
-
-            // 等待重试
-            try {
-                TimeUnit.MILLISECONDS.sleep(RETRY_INTERVAL_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        log.debug("获取锁超时: lockName={}", lockName);
-        return new LockContext(lockKey, requestId, false, this);
-    }
-
-    /**
-     * 释放锁
-     */
-    void unlock(String lockKey, String requestId) {
-        String value = redisService.get(lockKey);
-        if (requestId.equals(value)) {
-            redisService.delete(lockKey);
-            log.debug("释放锁成功: lockKey={}", lockKey);
-        } else {
-            log.debug("释放锁跳过 (非持有者): lockKey={}", lockKey);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("获取锁被中断: lockName={}", lockName);
+            return new LockContext(rLock, false);
         }
     }
 
     /**
      * 续期锁
+     * <p>
+     * Redisson Watch-Dog 默认自动续期 (每 10s 续期到 30s)。
+     * 如果使用了 leaseTime，Watch-Dog 不会自动续期，
+     * 此时可调用此方法手动判断锁是否仍然持有。
+     * </p>
+     *
+     * @return 当前线程是否仍然持有该锁
      */
     public boolean renewLock(String lockName, Duration timeout) {
         String lockKey = LOCK_KEY_PREFIX + lockName;
-        return redisService.expire(lockKey, timeout);
-    }
-
-    /**
-     * 生成请求 ID
-     */
-    private String generateRequestId() {
-        return StringUtil.uuid();
+        RLock rLock = redissonClient.getLock(lockKey);
+        return rLock.isHeldByCurrentThread();
     }
 
     // ==================== 锁上下文 ====================
@@ -203,17 +166,13 @@ public class LockService {
      * 锁上下文
      */
     public static class LockContext implements AutoCloseable {
-        private final String lockKey;
-        private final String requestId;
+        private final RLock rLock;
         private final boolean locked;
-        private final LockService lockService;
         private volatile boolean released = false;
 
-        LockContext(String lockKey, String requestId, boolean locked, LockService lockService) {
-            this.lockKey = lockKey;
-            this.requestId = requestId;
+        LockContext(RLock rLock, boolean locked) {
+            this.rLock = rLock;
             this.locked = locked;
-            this.lockService = lockService;
         }
 
         public boolean isLocked() {
@@ -223,7 +182,13 @@ public class LockService {
         public void unlock() {
             if (locked && !released) {
                 released = true;
-                lockService.unlock(lockKey, requestId);
+                try {
+                    if (rLock.isHeldByCurrentThread()) {
+                        rLock.unlock();
+                    }
+                } catch (Exception e) {
+                    // 锁可能已过期被释放，忽略
+                }
             }
         }
 
@@ -235,9 +200,6 @@ public class LockService {
 
     // ==================== 锁异常 ====================
 
-    /**
-     * 锁异常
-     */
     public static class LockException extends RuntimeException {
         public LockException(String message) {
             super(message);

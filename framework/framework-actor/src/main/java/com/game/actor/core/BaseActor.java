@@ -59,7 +59,11 @@ public abstract class BaseActor<T> extends Actor<T> {
 
     protected BaseActor(long actorId, String actorType, int maxMailboxSize) {
         super(actorId, actorType, maxMailboxSize);
-        // 扫描注册消息处理器
+        registerMessageHandlers();
+    }
+
+    protected BaseActor(long actorId, String actorType, int maxMailboxSize, MailboxOverflowStrategy overflowStrategy) {
+        super(actorId, actorType, maxMailboxSize, overflowStrategy);
         registerMessageHandlers();
     }
 

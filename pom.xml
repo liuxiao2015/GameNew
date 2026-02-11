@@ -93,6 +93,11 @@
         <!-- API 文档 -->
         <springdoc.version>2.3.0</springdoc.version>
 
+        <!-- 弹性 / 限流 / 分布式锁 -->
+        <resilience4j.version>2.2.0</resilience4j.version>
+        <bucket4j.version>8.10.1</bucket4j.version>
+        <redisson.version>3.27.2</redisson.version>
+
         <!-- 工具 -->
         <lombok.version>1.18.30</lombok.version>
         <hutool.version>5.8.25</hutool.version>
@@ -354,6 +359,42 @@
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
                 <version>${jackson.version}</version>
+            </dependency>
+
+            <!-- ==================== Resilience4j (熔断/重试) ==================== -->
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-circuitbreaker</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-retry</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-ratelimiter</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-spring-boot3</artifactId>
+                <version>${resilience4j.version}</version>
+            </dependency>
+
+            <!-- ==================== Bucket4j (限流) ==================== -->
+            <dependency>
+                <groupId>com.bucket4j</groupId>
+                <artifactId>bucket4j-core</artifactId>
+                <version>${bucket4j.version}</version>
+            </dependency>
+
+            <!-- ==================== Redisson (分布式锁) ==================== -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
             </dependency>
 
         <!-- ==================== XXL-Job ==================== -->

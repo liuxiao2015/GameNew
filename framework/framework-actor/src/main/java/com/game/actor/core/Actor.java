@@ -7,6 +7,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -16,6 +17,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * - 每个 Actor 实例对应一个实体 (玩家/公会等)
  * - 内部使用单线程顺序处理消息
  * - 通过消息队列实现线程安全
+ * </p>
+ * <p>
+ * 增强能力：
+ * - 监督策略 {@link SupervisorStrategy}: 异常时可选 RESUME/RESTART/STOP/ESCALATE
+ * - 背压机制 {@link MailboxOverflowStrategy}: 邮箱满时可选 DROP_NEW/DROP_OLDEST/BLOCK/DYNAMIC_GROW
  * </p>
  *
  * @param <T> Actor 数据类型
@@ -28,100 +34,86 @@ public abstract class Actor<T> implements Runnable {
      * Actor 状态
      */
     public enum State {
-        /**
-         * 初始化
-         */
-        INIT,
-        /**
-         * 运行中
-         */
-        RUNNING,
-        /**
-         * 已停止
-         */
-        STOPPED
+        INIT, RUNNING, STOPPED
     }
 
-    /**
-     * Actor ID
-     */
     @Getter
     private final long actorId;
 
-    /**
-     * Actor 类型
-     */
     @Getter
     private final String actorType;
 
-    /**
-     * Actor 数据
-     */
     @Getter
     protected volatile T data;
 
     /**
-     * 消息队列
+     * 消息队列 (邮箱)
+     * <p>
+     * 默认使用有界队列; DYNAMIC_GROW 策略下会切换为无界队列。
+     * </p>
      */
-    private final BlockingQueue<ActorMessage> mailbox;
+    private volatile BlockingQueue<ActorMessage> mailbox;
 
     /**
-     * 消息队列最大容量
+     * 邮箱最大容量 (软上限)
      */
     private final int maxMailboxSize;
 
     /**
-     * 运行状态
+     * 邮箱溢出策略 (背压)
      */
-    private volatile State state = State.INIT;
+    @Getter
+    private final MailboxOverflowStrategy overflowStrategy;
 
-    /**
-     * 是否正在处理中
-     */
+    private volatile State state = State.INIT;
     private final AtomicBoolean processing = new AtomicBoolean(false);
 
-    /**
-     * 是否有脏数据需要保存
-     */
     @Getter
     private final AtomicBoolean dirty = new AtomicBoolean(false);
 
-    /**
-     * 最后活跃时间
-     */
     @Getter
     private final AtomicLong lastActiveTime = new AtomicLong(System.currentTimeMillis());
 
-    /**
-     * 最后保存时间
-     */
     @Getter
     private final AtomicLong lastSaveTime = new AtomicLong(System.currentTimeMillis());
 
-    /**
-     * 创建时间
-     */
     @Getter
     private final long createTime = System.currentTimeMillis();
 
     /**
-     * Actor 系统引用
+     * 连续异常计数 (用于监督策略判断)
      */
-    private ActorSystem actorSystem;
+    @Getter
+    private final AtomicInteger consecutiveErrors = new AtomicInteger(0);
+
+    /**
+     * 邮箱已动态扩容标记
+     */
+    private volatile boolean mailboxGrown = false;
+
+    private ActorSystem<?> actorSystem;
+
+    // ==================== 构造 ====================
 
     protected Actor(long actorId, String actorType, int maxMailboxSize) {
+        this(actorId, actorType, maxMailboxSize, MailboxOverflowStrategy.DROP_NEW);
+    }
+
+    protected Actor(long actorId, String actorType, int maxMailboxSize, MailboxOverflowStrategy overflowStrategy) {
         this.actorId = actorId;
         this.actorType = actorType;
         this.maxMailboxSize = maxMailboxSize;
-        this.mailbox = new LinkedBlockingQueue<>(maxMailboxSize);
+        this.overflowStrategy = overflowStrategy;
+
+        if (overflowStrategy == MailboxOverflowStrategy.DYNAMIC_GROW) {
+            // 动态扩容模式使用无界队列
+            this.mailbox = new LinkedBlockingQueue<>();
+        } else {
+            this.mailbox = new LinkedBlockingQueue<>(maxMailboxSize);
+        }
     }
 
-    /**
-     * 设置 Actor 系统
-     */
-    void setActorSystem(ActorSystem actorSystem) {
-        this.actorSystem = actorSystem;
-    }
+    // ==================== 抽象方法 ====================
 
     /**
      * 初始化 Actor (加载数据)
@@ -139,10 +131,29 @@ public abstract class Actor<T> implements Runnable {
     protected abstract void handleMessage(ActorMessage message);
 
     /**
-     * Actor 停止前的清理工作
+     * Actor 停止前的清理工作 (子类可覆盖)
      */
     protected void onStop() {
-        // 子类可覆盖
+    }
+
+    /**
+     * 返回此 Actor 的监督策略 (子类可覆写以自定义)
+     * <p>
+     * 默认返回 null，表示使用 ActorSystem 的全局策略。
+     * </p>
+     */
+    protected SupervisorStrategy supervisorStrategy() {
+        return null;
+    }
+
+    // ==================== 生命周期 ====================
+
+    void setActorSystem(ActorSystem<?> actorSystem) {
+        this.actorSystem = actorSystem;
+    }
+
+    ActorSystem<?> getActorSystem() {
+        return actorSystem;
     }
 
     /**
@@ -153,18 +164,14 @@ public abstract class Actor<T> implements Runnable {
             log.warn("Actor 无法启动，当前状态: actorId={}, state={}", actorId, state);
             return;
         }
-
         try {
-            // 加载数据
             this.data = loadData();
             if (this.data == null) {
                 log.error("Actor 数据加载失败: actorId={}", actorId);
                 return;
             }
-
             this.state = State.RUNNING;
             log.info("Actor 启动成功: actorId={}, type={}", actorId, actorType);
-
         } catch (Exception e) {
             log.error("Actor 启动异常: actorId={}", actorId, e);
         }
@@ -177,31 +184,52 @@ public abstract class Actor<T> implements Runnable {
         if (state != State.RUNNING) {
             return;
         }
-
         this.state = State.STOPPED;
-        
         try {
-            // 处理剩余消息
             processRemainingMessages();
-
-            // 保存数据
             if (dirty.get()) {
                 saveData();
                 dirty.set(false);
             }
-
-            // 清理工作
             onStop();
-
             log.info("Actor 停止成功: actorId={}, type={}", actorId, actorType);
-
         } catch (Exception e) {
             log.error("Actor 停止异常: actorId={}", actorId, e);
         }
     }
 
     /**
+     * 重启 Actor (重新加载数据, 保留邮箱)
+     */
+    void restart() {
+        log.info("Actor 重启: actorId={}, type={}", actorId, actorType);
+        try {
+            // 先保存当前脏数据
+            if (dirty.get()) {
+                saveData();
+                dirty.set(false);
+            }
+            // 重新加载
+            T newData = loadData();
+            if (newData != null) {
+                this.data = newData;
+                this.consecutiveErrors.set(0);
+                log.info("Actor 重启成功: actorId={}", actorId);
+            } else {
+                log.error("Actor 重启失败 (数据加载返回 null): actorId={}", actorId);
+            }
+        } catch (Exception e) {
+            log.error("Actor 重启异常: actorId={}", actorId, e);
+        }
+    }
+
+    // ==================== 消息发送 (含背压) ====================
+
+    /**
      * 发送消息到 Actor
+     *
+     * @param message 消息
+     * @return 是否成功投递
      */
     public boolean tell(ActorMessage message) {
         if (state != State.RUNNING) {
@@ -209,29 +237,69 @@ public abstract class Actor<T> implements Runnable {
             return false;
         }
 
-        if (mailbox.size() >= maxMailboxSize) {
-            log.error("Actor 消息队列已满: actorId={}, size={}", actorId, mailbox.size());
-            return false;
-        }
-
-        boolean offered = mailbox.offer(message);
+        boolean offered = offerWithStrategy(message);
         if (offered) {
             lastActiveTime.set(System.currentTimeMillis());
-            // 触发消息处理
             tryProcess();
         }
         return offered;
     }
 
     /**
-     * 尝试处理消息
+     * 根据背压策略投递消息
      */
+    private boolean offerWithStrategy(ActorMessage message) {
+        // 队列未满，直接投递
+        if (mailbox.size() < maxMailboxSize) {
+            return mailbox.offer(message);
+        }
+
+        // 队列已满，按策略处理
+        return switch (overflowStrategy) {
+            case DROP_NEW -> {
+                log.warn("Actor 邮箱已满，丢弃新消息: actorId={}, msgType={}, size={}",
+                        actorId, message.getType(), mailbox.size());
+                yield false;
+            }
+            case DROP_OLDEST -> {
+                ActorMessage dropped = mailbox.poll();
+                if (dropped != null) {
+                    log.warn("Actor 邮箱已满，丢弃最旧消息: actorId={}, droppedType={}, newType={}",
+                            actorId, dropped.getType(), message.getType());
+                }
+                yield mailbox.offer(message);
+            }
+            case BLOCK_WITH_TIMEOUT -> {
+                try {
+                    boolean ok = mailbox.offer(message, 3, TimeUnit.SECONDS);
+                    if (!ok) {
+                        log.warn("Actor 邮箱已满且等待超时: actorId={}, msgType={}", actorId, message.getType());
+                    }
+                    yield ok;
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    yield false;
+                }
+            }
+            case DYNAMIC_GROW -> {
+                // 无界队列，直接投递，但超过软上限打印告警
+                if (!mailboxGrown && mailbox.size() >= maxMailboxSize) {
+                    mailboxGrown = true;
+                    log.warn("Actor 邮箱超过软上限，已动态扩容: actorId={}, size={}, softLimit={}",
+                            actorId, mailbox.size(), maxMailboxSize);
+                }
+                yield mailbox.offer(message);
+            }
+        };
+    }
+
+    // ==================== 消息处理 (含监督策略) ====================
+
     private void tryProcess() {
         if (processing.compareAndSet(false, true)) {
             if (actorSystem != null) {
                 actorSystem.execute(this);
             } else {
-                // 如果没有 ActorSystem，直接运行
                 run();
             }
         }
@@ -243,19 +311,15 @@ public abstract class Actor<T> implements Runnable {
             processMessages();
         } finally {
             processing.set(false);
-            // 如果还有消息，继续处理
             if (!mailbox.isEmpty() && state == State.RUNNING) {
                 tryProcess();
             }
         }
     }
 
-    /**
-     * 处理消息 (批量处理)
-     */
     private void processMessages() {
         int processedCount = 0;
-        int maxBatchSize = 100; // 每次最多处理 100 条消息
+        int maxBatchSize = 100;
 
         while (processedCount < maxBatchSize && state == State.RUNNING) {
             try {
@@ -263,10 +327,8 @@ public abstract class Actor<T> implements Runnable {
                 if (message == null) {
                     break;
                 }
-
                 handleMessageSafe(message);
                 processedCount++;
-
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -274,9 +336,6 @@ public abstract class Actor<T> implements Runnable {
         }
     }
 
-    /**
-     * 处理剩余消息
-     */
     private void processRemainingMessages() {
         while (!mailbox.isEmpty()) {
             ActorMessage message = mailbox.poll();
@@ -287,26 +346,69 @@ public abstract class Actor<T> implements Runnable {
     }
 
     /**
-     * 安全地处理消息
+     * 安全地处理消息 (集成监督策略)
      */
     private void handleMessageSafe(ActorMessage message) {
         try {
             handleMessage(message);
+            // 成功则重置连续异常计数
+            consecutiveErrors.set(0);
         } catch (Exception e) {
-            log.error("Actor 处理消息异常: actorId={}, msgType={}", actorId, message.getType(), e);
+            consecutiveErrors.incrementAndGet();
+            log.error("Actor 处理消息异常: actorId={}, msgType={}, consecutiveErrors={}",
+                    actorId, message.getType(), consecutiveErrors.get(), e);
+
+            // 查找监督策略: Actor 级别 > ActorSystem 全局
+            SupervisorStrategy strategy = supervisorStrategy();
+            if (strategy == null && actorSystem != null) {
+                strategy = actorSystem.getSupervisorStrategy();
+            }
+            if (strategy == null) {
+                strategy = SupervisorStrategy.defaultStrategy();
+            }
+
+            SupervisorStrategy.Directive directive = strategy.decide(this, message, e);
+            executeDirective(directive, message, e);
         }
     }
 
     /**
-     * 标记数据为脏
+     * 执行监督指令
      */
+    private void executeDirective(SupervisorStrategy.Directive directive, ActorMessage message, Exception error) {
+        switch (directive) {
+            case RESUME -> {
+                // 默认: 不做额外处理，继续下一条消息
+                log.debug("SupervisorStrategy: RESUME actorId={}", actorId);
+            }
+            case RESTART -> {
+                log.info("SupervisorStrategy: RESTART actorId={}", actorId);
+                restart();
+            }
+            case STOP -> {
+                log.info("SupervisorStrategy: STOP actorId={}", actorId);
+                stop();
+                if (actorSystem != null) {
+                    actorSystem.removeActor(actorId);
+                }
+            }
+            case ESCALATE -> {
+                log.info("SupervisorStrategy: ESCALATE actorId={}", actorId);
+                if (actorSystem != null) {
+                    actorSystem.onEscalate(this, message, error);
+                } else {
+                    log.error("SupervisorStrategy: ESCALATE 但无 ActorSystem, actorId={}", actorId);
+                }
+            }
+        }
+    }
+
+    // ==================== 数据管理 ====================
+
     public void markDirty() {
         dirty.set(true);
     }
 
-    /**
-     * 检查并保存数据 (定期调用)
-     */
     public void checkAndSave(long saveIntervalMs) {
         long now = System.currentTimeMillis();
         if (dirty.get() && (now - lastSaveTime.get()) >= saveIntervalMs) {
@@ -320,24 +422,27 @@ public abstract class Actor<T> implements Runnable {
         }
     }
 
-    /**
-     * 判断是否空闲
-     */
+    // ==================== 状态查询 ====================
+
     public boolean isIdle(long idleTimeoutMs) {
         return (System.currentTimeMillis() - lastActiveTime.get()) > idleTimeoutMs;
     }
 
-    /**
-     * 判断是否运行中
-     */
     public boolean isRunning() {
         return state == State.RUNNING;
     }
 
-    /**
-     * 获取消息队列大小
-     */
     public int getMailboxSize() {
         return mailbox.size();
+    }
+
+    /**
+     * 获取邮箱使用率 (0.0 ~ 1.0+)
+     * <p>
+     * DYNAMIC_GROW 模式下可能超过 1.0
+     * </p>
+     */
+    public float getMailboxUsage() {
+        return (float) mailbox.size() / maxMailboxSize;
     }
 }

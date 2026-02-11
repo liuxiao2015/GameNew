@@ -74,3 +74,8 @@ desktop.ini
 
 # ==================== Docker ====================
 docker-compose.override.yml
+
+# ==================== Tools ====================
+# Nacos (自动下载，不提交到 Git)
+tools/nacos/
+tools/nacos-server-*.zip

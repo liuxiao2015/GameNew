@@ -37,6 +37,20 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- Common API (for ActorRemoteService interface) -->
+        <dependency>
+            <groupId>com.game</groupId>
+            <artifactId>common-api</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Dubbo (for remote actor messaging) -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- Caffeine -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>

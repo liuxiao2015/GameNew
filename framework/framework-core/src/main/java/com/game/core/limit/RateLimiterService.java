@@ -1,6 +1,8 @@
 package com.game.core.limit;
 
 import com.game.data.redis.RedisService;
+import io.github.bucket4j.Bandwidth;
+import io.github.bucket4j.Bucket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,18 +10,11 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 限流服务
+ * 限流服务 (本地 Bucket4j + 分布式 Redis)
  * <p>
- * 提供多种限流策略：
- * <ul>
- *     <li>令牌桶 - 本地限流，适合单机</li>
- *     <li>滑动窗口 - Redis 限流，适合分布式</li>
- *     <li>计数器 - 简单限流</li>
- * </ul>
+ * 本地限流使用 Bucket4j 令牌桶，分布式限流使用 Redis 滑动窗口。
  * </p>
  *
  * <pre>
@@ -28,8 +23,6 @@ import java.util.concurrent.atomic.AtomicLong;
  * // 本地令牌桶限流 (每秒 100 个请求)
  * if (rateLimiter.tryAcquire("api:login", 100)) {
  *     // 处理请求
- * } else {
- *     // 限流
  * }
  *
  * // 分布式滑动窗口限流 (1分钟内最多 10 次)
@@ -54,57 +47,64 @@ public class RateLimiterService {
     private final RedisService redisService;
 
     /**
-     * 本地令牌桶
+     * 本地 Bucket4j 桶缓存
      */
-    private final Map<String, TokenBucket> tokenBuckets = new ConcurrentHashMap<>();
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     /**
      * Redis Key 前缀
      */
     private static final String LIMIT_KEY_PREFIX = "limit:";
 
-    // ==================== 本地令牌桶限流 ====================
+    // ==================== 本地令牌桶限流 (Bucket4j) ====================
 
     /**
      * 尝试获取令牌 (本地限流)
      *
-     * @param key       限流 Key
+     * @param key           限流 Key
      * @param ratePerSecond 每秒允许的请求数
      * @return true=获取成功
      */
     public boolean tryAcquire(String key, int ratePerSecond) {
-        TokenBucket bucket = tokenBuckets.computeIfAbsent(key,
-                k -> new TokenBucket(ratePerSecond, ratePerSecond));
-        return bucket.tryAcquire();
+        Bucket bucket = buckets.computeIfAbsent(key, k -> createBucket(ratePerSecond));
+        return bucket.tryConsume(1);
     }
 
     /**
      * 尝试获取多个令牌
      */
     public boolean tryAcquire(String key, int ratePerSecond, int permits) {
-        TokenBucket bucket = tokenBuckets.computeIfAbsent(key,
-                k -> new TokenBucket(ratePerSecond, ratePerSecond));
-        return bucket.tryAcquire(permits);
+        Bucket bucket = buckets.computeIfAbsent(key, k -> createBucket(ratePerSecond));
+        return bucket.tryConsume(permits);
     }
 
-    // ==================== 分布式限流 ====================
+    /**
+     * 创建 Bucket4j 桶
+     */
+    private Bucket createBucket(int ratePerSecond) {
+        Bandwidth limit = Bandwidth.builder()
+                .capacity(ratePerSecond)
+                .refillGreedy(ratePerSecond, Duration.ofSeconds(1))
+                .build();
+        return Bucket.builder().addLimit(limit).build();
+    }
+
+    // ==================== 分布式限流 (Redis 滑动窗口) ====================
 
     /**
      * 分布式滑动窗口限流
      *
-     * @param key       限流 Key
-     * @param maxCount  窗口内最大请求数
-     * @param window    时间窗口
+     * @param key      限流 Key
+     * @param maxCount 窗口内最大请求数
+     * @param window   时间窗口
      * @return true=未超限
      */
     public boolean tryAcquireDistributed(String key, int maxCount, Duration window) {
         String redisKey = LIMIT_KEY_PREFIX + key;
         long windowSeconds = window.toSeconds();
 
-        // 增加计数
         Long count = redisService.increment(redisKey);
 
-        // 首次访问设置过期时间
         if (count != null && count == 1) {
             redisService.expire(redisKey, windowSeconds);
         }
@@ -137,90 +137,18 @@ public class RateLimiterService {
 
     // ==================== 玩家限流 ====================
 
-    /**
-     * 玩家操作限流
-     *
-     * @param roleId     角色 ID
-     * @param action     操作类型
-     * @param maxCount   最大次数
-     * @param window     时间窗口
-     * @return true=未超限
-     */
     public boolean tryPlayerLimit(long roleId, String action, int maxCount, Duration window) {
         String key = "player:" + roleId + ":" + action;
         return tryAcquireDistributed(key, maxCount, window);
     }
 
-    /**
-     * IP 限流
-     *
-     * @param ip         IP 地址
-     * @param action     操作类型
-     * @param maxCount   最大次数
-     * @param window     时间窗口
-     * @return true=未超限
-     */
     public boolean tryIpLimit(String ip, String action, int maxCount, Duration window) {
         String key = "ip:" + ip + ":" + action;
         return tryAcquireDistributed(key, maxCount, window);
     }
 
-    /**
-     * 设备限流
-     */
     public boolean tryDeviceLimit(String deviceId, String action, int maxCount, Duration window) {
         String key = "device:" + deviceId + ":" + action;
         return tryAcquireDistributed(key, maxCount, window);
-    }
-
-    // ==================== 令牌桶实现 ====================
-
-    /**
-     * 令牌桶
-     */
-    private static class TokenBucket {
-        private final int capacity;
-        private final int refillRate;
-        private final AtomicInteger tokens;
-        private final AtomicLong lastRefillTime;
-
-        TokenBucket(int capacity, int refillRate) {
-            this.capacity = capacity;
-            this.refillRate = refillRate;
-            this.tokens = new AtomicInteger(capacity);
-            this.lastRefillTime = new AtomicLong(System.currentTimeMillis());
-        }
-
-        boolean tryAcquire() {
-            return tryAcquire(1);
-        }
-
-        boolean tryAcquire(int permits) {
-            refill();
-            int current = tokens.get();
-            if (current >= permits) {
-                if (tokens.compareAndSet(current, current - permits)) {
-                    return true;
-                }
-                // CAS 失败，重试
-                return tryAcquire(permits);
-            }
-            return false;
-        }
-
-        private void refill() {
-            long now = System.currentTimeMillis();
-            long last = lastRefillTime.get();
-            long elapsed = now - last;
-
-            if (elapsed > 1000) {
-                int newTokens = (int) (elapsed / 1000 * refillRate);
-                if (newTokens > 0 && lastRefillTime.compareAndSet(last, now)) {
-                    int current = tokens.get();
-                    int updated = Math.min(capacity, current + newTokens);
-                    tokens.set(updated);
-                }
-            }
-        }
     }
 }

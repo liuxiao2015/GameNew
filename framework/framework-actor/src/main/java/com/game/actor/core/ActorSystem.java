@@ -1,22 +1,26 @@
 package com.game.actor.core;
 
+import com.game.actor.cluster.ActorShardRouter;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
  * Actor 系统
  * <p>
- * 管理 Actor 的生命周期、调度和持久化
+ * 管理 Actor 的生命周期、调度和持久化。
+ * 增强: 全局监督策略 + 异常上报回调。
  * </p>
  *
  * @param <T> Actor 类型
@@ -25,20 +29,11 @@ import java.util.function.Function;
 @Slf4j
 public class ActorSystem<T extends Actor<?>> {
 
-    /**
-     * 系统名称
-     */
     @Getter
     private final String name;
 
-    /**
-     * Actor 缓存
-     */
     private final Cache<Long, T> actorCache;
 
-    /**
-     * Actor 创建工厂
-     */
     private final Function<Long, T> actorFactory;
 
     /**
@@ -51,32 +46,46 @@ public class ActorSystem<T extends Actor<?>> {
      */
     private final ScheduledExecutorService scheduler;
 
-    /**
-     * 配置
-     */
     private final ActorSystemConfig config;
 
     /**
-     * 是否已关闭
+     * 全局监督策略
      */
+    @Getter
+    private final SupervisorStrategy supervisorStrategy;
+
+    /**
+     * 异常上报处理器 (ESCALATE 指令的回调)
+     */
+    private final BiConsumer<Actor<?>, Throwable> escalateHandler;
+
+    /**
+     * 集群分片路由器 (可选)
+     * <p>
+     * 非 null 时 {@link #tellCluster(long, ActorMessage)} 方法将自动路由到正确的节点。
+     * 由 Spring 注入，未配置集群时为 null。
+     * </p>
+     */
+    @Setter
+    private ActorShardRouter shardRouter;
+
     private volatile boolean shutdown = false;
 
     public ActorSystem(String name, ActorSystemConfig config, Function<Long, T> actorFactory) {
         this.name = name;
         this.config = config;
         this.actorFactory = actorFactory;
+        this.supervisorStrategy = config.getSupervisorStrategy();
+        this.escalateHandler = config.getEscalateHandler();
 
-        // 创建虚拟线程执行器
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
 
-        // 创建调度器
         this.scheduler = Executors.newScheduledThreadPool(2, r -> {
             Thread t = new Thread(r, name + "-scheduler");
             t.setDaemon(true);
             return t;
         });
 
-        // 创建 Caffeine 缓存
         this.actorCache = Caffeine.newBuilder()
                 .maximumSize(config.getMaxSize())
                 .expireAfterAccess(Duration.ofMinutes(config.getIdleTimeoutMinutes()))
@@ -90,7 +99,6 @@ public class ActorSystem<T extends Actor<?>> {
 
     @PostConstruct
     public void init() {
-        // 启动定时保存任务
         long saveIntervalSeconds = config.getSaveIntervalSeconds();
         scheduler.scheduleAtFixedRate(
                 this::saveAllActors,
@@ -99,13 +107,15 @@ public class ActorSystem<T extends Actor<?>> {
                 TimeUnit.SECONDS
         );
 
-        // 启动空闲检查任务
         scheduler.scheduleAtFixedRate(
                 this::checkIdleActors,
                 60,
                 60,
                 TimeUnit.SECONDS
         );
+
+        // 注册到全局注册表 (供远程 Actor 消息路由)
+        ActorSystemRegistry.register(this);
 
         log.info("ActorSystem 启动成功: name={}, maxSize={}, idleTimeout={}min, saveInterval={}s",
                 name, config.getMaxSize(), config.getIdleTimeoutMinutes(), saveIntervalSeconds);
@@ -116,17 +126,11 @@ public class ActorSystem<T extends Actor<?>> {
         shutdown = true;
         log.info("ActorSystem 开始关闭: name={}", name);
 
-        // 停止调度器
         scheduler.shutdown();
-
-        // 保存所有 Actor 数据
         saveAllActors();
-
-        // 停止所有 Actor
         actorCache.asMap().values().forEach(Actor::stop);
         actorCache.invalidateAll();
 
-        // 关闭执行器
         executor.shutdown();
         try {
             if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
@@ -137,17 +141,18 @@ public class ActorSystem<T extends Actor<?>> {
             Thread.currentThread().interrupt();
         }
 
+        // 从全局注册表注销
+        ActorSystemRegistry.unregister(name);
+
         log.info("ActorSystem 关闭完成: name={}", name);
     }
 
-    /**
-     * 获取或创建 Actor
-     */
+    // ==================== Actor 管理 ====================
+
     public T getActor(long actorId) {
         if (shutdown) {
             return null;
         }
-
         return actorCache.get(actorId, id -> {
             T actor = actorFactory.apply(id);
             if (actor != null) {
@@ -158,16 +163,12 @@ public class ActorSystem<T extends Actor<?>> {
         });
     }
 
-    /**
-     * 获取 Actor (不创建)
-     */
     public T getActorIfPresent(long actorId) {
         return actorCache.getIfPresent(actorId);
     }
 
-    /**
-     * 发送消息到 Actor
-     */
+    // ==================== 消息发送 ====================
+
     public boolean tell(long actorId, ActorMessage message) {
         T actor = getActor(actorId);
         if (actor != null) {
@@ -176,19 +177,10 @@ public class ActorSystem<T extends Actor<?>> {
         return false;
     }
 
-    /**
-     * 发送数据消息到 Actor
-     * <p>
-     * 消息数据会被自动包装为 ActorMessage
-     * </p>
-     */
     public boolean tell(long actorId, Object data) {
         return tell(actorId, ActorMessage.of("DATA", data));
     }
 
-    /**
-     * 发送消息到 Actor (不自动创建)
-     */
     public boolean tellIfPresent(long actorId, ActorMessage message) {
         T actor = getActorIfPresent(actorId);
         if (actor != null) {
@@ -197,9 +189,53 @@ public class ActorSystem<T extends Actor<?>> {
         return false;
     }
 
+    // ==================== 集群路由消息发送 ====================
+
     /**
-     * 移除 Actor
+     * 向 Actor 发送消息 (集群感知)
+     * <p>
+     * 自动判断目标 Actor 在本地还是远程:
+     * <ul>
+     *     <li>本地 → 直接投递到本地 Actor 邮箱</li>
+     *     <li>远程 → 通过 Dubbo RPC 转发到目标节点</li>
+     *     <li>无 ShardRouter → 退化为本地 tell()</li>
+     * </ul>
+     * </p>
+     *
+     * @param actorId 目标 Actor ID
+     * @param message 消息
+     * @return 是否成功投递
      */
+    public boolean tellCluster(long actorId, ActorMessage message) {
+        if (shardRouter == null) {
+            // 未配置集群, 退化为本地
+            return tell(actorId, message);
+        }
+        return shardRouter.tell(name, actorId, message);
+    }
+
+    /**
+     * 向 Actor 发送消息 (集群感知, 便捷方法)
+     */
+    public boolean tellCluster(long actorId, Object data) {
+        return tellCluster(actorId, ActorMessage.of("DATA", data));
+    }
+
+    /**
+     * 判断指定 Actor 是否由本地节点管理
+     *
+     * @param actorId Actor ID
+     * @return true 表示本地, false 表示远程; 无集群时总是返回 true
+     */
+    public boolean isLocalActor(long actorId) {
+        if (shardRouter == null) {
+            return true;
+        }
+        return shardRouter.isLocal(actorId);
+    }
+
+    // ==================== Actor 生命周期 ====================
+
     public void removeActor(long actorId) {
         T actor = actorCache.getIfPresent(actorId);
         if (actor != null) {
@@ -208,56 +244,57 @@ public class ActorSystem<T extends Actor<?>> {
         }
     }
 
-    /**
-     * 判断 Actor 是否存在
-     */
     public boolean hasActor(long actorId) {
         return actorCache.getIfPresent(actorId) != null;
     }
 
-    /**
-     * 获取所有 Actor
-     */
     public Collection<T> getAllActors() {
         return actorCache.asMap().values();
     }
 
-    /**
-     * 获取 Actor 数量
-     */
     public long getActorCount() {
         return actorCache.estimatedSize();
     }
 
+    // ==================== 监督策略支持 ====================
+
     /**
-     * 执行 Actor 任务
+     * 当 Actor 使用 ESCALATE 指令时被调用
      */
+    void onEscalate(Actor<?> actor, ActorMessage message, Exception error) {
+        log.error("Actor 异常上报: actorId={}, type={}, msgType={}, error={}",
+                actor.getActorId(), actor.getActorType(),
+                message != null ? message.getType() : "null",
+                error.getMessage(), error);
+
+        if (escalateHandler != null) {
+            try {
+                escalateHandler.accept(actor, error);
+            } catch (Exception handlerError) {
+                log.error("ESCALATE 处理器自身异常: actorId={}", actor.getActorId(), handlerError);
+            }
+        }
+    }
+
+    // ==================== 内部方法 ====================
+
     void execute(Runnable task) {
         if (!shutdown) {
             executor.execute(task);
         }
     }
 
-    /**
-     * Actor 被移除时的回调
-     */
     private void onActorRemoval(Long actorId, T actor, RemovalCause cause) {
         log.info("Actor 被移除: actorId={}, cause={}", actorId, cause);
-        
         try {
-            // 保存数据并停止
             actor.stop();
         } catch (Exception e) {
             log.error("Actor 移除处理异常: actorId={}", actorId, e);
         }
     }
 
-    /**
-     * 保存所有 Actor 数据
-     */
     private void saveAllActors() {
         long saveIntervalMs = config.getSaveIntervalSeconds() * 1000L;
-        
         actorCache.asMap().values().forEach(actor -> {
             try {
                 actor.checkAndSave(saveIntervalMs);
@@ -267,41 +304,27 @@ public class ActorSystem<T extends Actor<?>> {
         });
     }
 
-    /**
-     * 检查空闲 Actor
-     */
     private void checkIdleActors() {
-        // Caffeine 会自动处理过期，这里只做日志
         long idleTimeoutMs = config.getIdleTimeoutMinutes() * 60 * 1000L;
         long idleCount = actorCache.asMap().values().stream()
                 .filter(actor -> actor.isIdle(idleTimeoutMs))
                 .count();
-        
+
         if (idleCount > 0) {
-            log.debug("ActorSystem 空闲检查: name={}, total={}, idle={}", 
+            log.debug("ActorSystem 空闲检查: name={}, total={}, idle={}",
                     name, actorCache.estimatedSize(), idleCount);
         }
     }
 
-    /**
-     * ActorSystem 配置
-     */
+    // ==================== 配置 ====================
+
     @Getter
     public static class ActorSystemConfig {
-        /**
-         * 最大 Actor 数量
-         */
         private int maxSize = 10000;
-
-        /**
-         * 空闲超时时间 (分钟)
-         */
         private int idleTimeoutMinutes = 30;
-
-        /**
-         * 保存间隔 (秒)
-         */
         private int saveIntervalSeconds = 300;
+        private SupervisorStrategy supervisorStrategy = SupervisorStrategy.defaultStrategy();
+        private BiConsumer<Actor<?>, Throwable> escalateHandler;
 
         public ActorSystemConfig maxSize(int maxSize) {
             this.maxSize = maxSize;
@@ -315,6 +338,24 @@ public class ActorSystem<T extends Actor<?>> {
 
         public ActorSystemConfig saveIntervalSeconds(int seconds) {
             this.saveIntervalSeconds = seconds;
+            return this;
+        }
+
+        /**
+         * 设置全局监督策略
+         */
+        public ActorSystemConfig supervisorStrategy(SupervisorStrategy strategy) {
+            this.supervisorStrategy = strategy;
+            return this;
+        }
+
+        /**
+         * 设置 ESCALATE 回调处理器
+         *
+         * @param handler 接收 (Actor, Throwable) 的处理器
+         */
+        public ActorSystemConfig escalateHandler(BiConsumer<Actor<?>, Throwable> handler) {
+            this.escalateHandler = handler;
             return this;
         }
 
